@@ -3,7 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OCR Document Converter</title>
+  <title>OCR &amp; Research Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/_sdk/data_sdk.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
@@ -28,26 +28,6 @@
     .result-section {
       max-height: 500px;
       overflow-y: auto;
-    }
-    
-    .table-container {
-      overflow-x: auto;
-    }
-    
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    
-    table th, table td {
-      border: 1px solid #cbd5e0;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    
-    table th {
-      background-color: #edf2f7;
-      font-weight: 600;
     }
     
     .loading-spinner {
@@ -105,6 +85,35 @@
     .hidden {
       display: none;
     }
+    
+    .tab-active {
+      background-color: #667eea !important;
+      color: white !important;
+    }
+    
+    .tab-inactive {
+      background-color: #f7fafc;
+      color: #4a5568;
+    }
+    
+    .chapter-item {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .chapter-item:hover {
+      background-color: #edf2f7;
+    }
+    
+    .ris-entry {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #f7fafc;
+      padding: 12px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      margin-top: 8px;
+    }
   </style>
   <style>@view-transition { navigation: auto; }</style>
  </head>
@@ -113,56 +122,137 @@
    <div class="w-full px-4 py-8">
     <div class="max-w-6xl mx-auto"><!-- Header -->
      <div class="text-center mb-8">
-      <h1 id="app-title" class="text-white mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">OCR Document Converter</h1>
-      <p id="instruction-text" class="text-white" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Upload gambar dokumen untuk mengekstrak teks dan tabel</p>
-     </div><!-- Upload Section -->
-     <div class="bg-white rounded-lg p-6 card-shadow mb-6">
-      <div class="mb-4"><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span>📁 </span><span id="upload-label">Pilih Gambar</span> </label>
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><button id="uploadBtn" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📂 Upload dari Galeri </button> <button id="cameraBtn" class="w-full py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📸 Ambil Foto Langsung </button>
-       </div><input type="file" id="imageInputGallery" accept="image/*" class="hidden"> <input type="file" id="imageInputCamera" accept="image/*" capture="environment" class="hidden">
+      <h1 id="app-title" class="text-white mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">OCR &amp; Research Assistant</h1>
+      <p id="instruction-text" class="text-white" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Pilih fitur: OCR Scanner atau Asisten Karya Ilmiah</p>
+     </div><!-- Navigation Tabs -->
+     <div class="bg-white rounded-lg p-2 card-shadow mb-6">
+      <div class="flex gap-2"><button id="tabOCR" class="flex-1 py-3 px-4 rounded-lg transition-colors font-semibold tab-active" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📸 OCR Scanner </button> <button id="tabResearch" class="flex-1 py-3 px-4 rounded-lg transition-colors font-semibold tab-inactive" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 🎓 Asisten Karya Ilmiah </button>
       </div>
-      <div class="mb-4"><img id="previewImage" class="hidden w-full max-h-96 object-contain rounded-lg border-2 border-gray-200" alt="Preview">
-      </div><!-- Language Settings -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-       <div><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌐 Bahasa Objek</label> <select id="objectLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="ind">Indonesia</option> <option value="eng">English</option> <option value="ind+eng">Campuran (IND+ENG)</option> <option value="jpn">Japanese</option> <option value="chi_sim">Chinese Simplified</option> <option value="ara">Arabic</option> <option value="fra">French</option> <option value="deu">German</option> <option value="spa">Spanish</option> </select>
+     </div><!-- OCR Section -->
+     <div id="ocrSection"><!-- Upload Section -->
+      <div class="bg-white rounded-lg p-6 card-shadow mb-6">
+       <div class="mb-4"><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span>📁 </span><span id="upload-label">Pilih Gambar</span> </label>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><button id="uploadBtn" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📂 Upload dari Galeri </button> <button id="cameraBtn" class="w-full py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📸 Ambil Foto Langsung </button>
+        </div><input type="file" id="imageInputGallery" accept="image/*" class="hidden"> <input type="file" id="imageInputCamera" accept="image/*" capture="environment" class="hidden">
        </div>
-       <div><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">💬 Bahasa Output</label> <select id="outputLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="original">Bahasa Asli</option> <option value="id">Indonesia</option> <option value="en">English</option> </select>
+       <div class="mb-4"><img id="previewImage" class="hidden w-full max-h-96 object-contain rounded-lg border-2 border-gray-200" alt="Preview">
+       </div><!-- Language Settings -->
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌐 Bahasa Objek</label> <select id="objectLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="ind">Indonesia</option> <option value="eng">English</option> <option value="ind+eng">Campuran (IND+ENG)</option> <option value="jpn">Japanese</option> <option value="chi_sim">Chinese Simplified</option> <option value="ara">Arabic</option> <option value="fra">French</option> <option value="deu">German</option> <option value="spa">Spanish</option> </select>
+        </div>
+        <div><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 Format Output</label> <select id="outputFormat" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="txt">Plain Text (.txt)</option> <option value="word">Word (.doc)</option> <option value="markdown">Markdown (.md)</option> <option value="csv">CSV (.csv)</option> </select>
+        </div>
+       </div><button id="processBtn" class="w-full text-white py-3 rounded-lg transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span id="process-btn-text">🔍 Ekstrak Teks</span> </button>
+       <div id="loadingIndicator" class="hidden text-center mt-4">
+        <div class="loading-spinner mx-auto"></div>
+        <p id="loadingText" class="mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Memuat OCR Engine...</p>
+        <div class="progress-bar">
+         <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p id="progressText" class="mt-1 text-sm text-gray-600" style="font-family: 'Segoe UI', Tahoma, sans-serif;">0%</p>
        </div>
-      </div><!-- Output Format -->
-      <div class="mb-4"><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 Format Output</label> <select id="outputFormat" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="txt">Plain Text (.txt)</option> <option value="word">Word (.doc)</option> <option value="markdown">Markdown (.md)</option> <option value="csv">CSV (.csv)</option> </select>
-      </div><button id="processBtn" class="w-full text-white py-3 rounded-lg transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span id="process-btn-text">🔍 Ekstrak Teks &amp; Tabel</span> </button>
-      <div id="loadingIndicator" class="hidden text-center mt-4">
-       <div class="loading-spinner mx-auto"></div>
-       <p id="loadingText" class="mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Memuat OCR Engine...</p>
-       <div class="progress-bar">
-        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+      </div><!-- OCR Results Section -->
+      <div id="resultsSection" class="hidden bg-white rounded-lg p-6 card-shadow mb-6">
+       <h2 class="mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📋 Hasil Ekstraksi</h2>
+       <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+        <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Ringkasan</h3>
+        <p id="summaryText" style="font-family: 'Segoe UI', Tahoma, sans-serif;"></p>
        </div>
-       <p id="progressText" class="mt-1 text-sm text-gray-600" style="font-family: 'Segoe UI', Tahoma, sans-serif;">0%</p>
+       <div class="mb-6 p-4 bg-green-50 rounded-lg">
+        <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📊 Akurasi</h3>
+        <div class="flex items-center gap-3">
+         <div class="flex-1 bg-gray-200 rounded-full h-4">
+          <div id="confidenceBar" class="bg-green-500 h-4 rounded-full transition-all" style="width: 0%"></div>
+         </div><span id="confidenceText" class="font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">0%</span>
+        </div>
+       </div>
+       <div class="mb-6">
+        <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📝 Teks Lengkap</h3>
+        <div id="extractedText" class="p-4 bg-gray-50 rounded-lg result-section" style="font-family: 'Segoe UI', Tahoma, sans-serif; white-space: pre-wrap;"></div>
+       </div>
+       <div class="flex flex-wrap gap-3"><button id="downloadBtn" class="px-6 py-2 text-white rounded-lg transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 💾 Download Hasil </button> <button id="copyOCRBtn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📋 Copy Teks </button> <button id="saveOCRBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📊 Simpan ke Canva Sheet </button> <button id="translateBtn" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 🌐 Terjemahkan </button>
+       </div>
       </div>
-     </div><!-- Results Section -->
-     <div id="resultsSection" class="hidden bg-white rounded-lg p-6 card-shadow mb-6">
-      <h2 class="mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📋 Hasil Ekstraksi</h2><!-- Summary -->
-      <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-       <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Ringkasan</h3>
-       <p id="summaryText" style="font-family: 'Segoe UI', Tahoma, sans-serif;"></p>
-      </div><!-- Confidence Score -->
-      <div class="mb-6 p-4 bg-green-50 rounded-lg">
-       <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📊 Akurasi</h3>
-       <div class="flex items-center gap-3">
-        <div class="flex-1 bg-gray-200 rounded-full h-4">
-         <div id="confidenceBar" class="bg-green-500 h-4 rounded-full transition-all" style="width: 0%"></div>
-        </div><span id="confidenceText" class="font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">0%</span>
+     </div><!-- Research Section -->
+     <div id="researchSection" class="hidden"><!-- Research Form -->
+      <div class="bg-white rounded-lg p-6 card-shadow mb-6">
+       <h2 class="mb-4 text-2xl font-bold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📚 Generator Karya Ilmiah</h2>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🎓 Jenis Karya</label> <select id="researchType" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="skripsi">Skripsi (S1)</option> <option value="tesis">Tesis (S2)</option> <option value="disertasi">Disertasi (S3)</option> </select>
+        </div>
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📖 Gaya Sitasi</label> <select id="citationStyle" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="APA">APA (American Psychological Association)</option> <option value="IEEE">IEEE</option> <option value="Chicago">Chicago</option> <option value="Vancouver">Vancouver</option> <option value="Harvard">Harvard</option> </select>
+        </div>
        </div>
-      </div><!-- Extracted Text -->
-      <div class="mb-6">
-       <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📝 Teks Lengkap</h3>
-       <div id="extractedText" class="p-4 bg-gray-50 rounded-lg result-section" style="font-family: 'Segoe UI', Tahoma, sans-serif; white-space: pre-wrap;"></div>
-      </div><!-- Download Buttons -->
-      <div class="flex flex-wrap gap-3"><button id="downloadBtn" class="px-6 py-2 text-white rounded-lg transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 💾 Download Hasil </button> <button id="saveToSheetBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📊 Simpan ke Canva Sheet </button>
+       <div class="mb-4"><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">✍️ Gaya Penulisan</label> <select id="writingStyle" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="akademisi">Akademisi - Formal dan terstruktur dengan teori mendalam</option> <option value="profesional">Profesional - Praktis dan aplikatif untuk dunia kerja</option> <option value="dosen">Dosen - Edukatif dengan penjelasan detail untuk pembelajaran</option> <option value="umum">Umum - Mudah dipahami dengan bahasa sederhana</option> <option value="mendalam">Mendalam - Analisis komprehensif dengan kajian filosofis</option> </select>
+       </div>
+       <div class="mb-4"><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📝 Topik Penelitian</label> <input type="text" id="researchTopic" placeholder="Contoh: Pengaruh Kecerdasan Buatan terhadap Produktivitas Kerja" class="w-full p-3 border-2 border-gray-300 rounded-lg" style="font-family: 'Segoe UI', Tahoma, sans-serif;">
+       </div>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📚 Referensi Nasional</label> <input type="number" id="referenceNational" value="10" min="0" max="50" class="w-full p-3 border-2 border-gray-300 rounded-lg">
+        </div>
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌍 Referensi Internasional</label> <input type="number" id="referenceInternational" value="10" min="0" max="50" class="w-full p-3 border-2 border-gray-300 rounded-lg">
+        </div>
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌐 Bahasa Output</label> <select id="researchLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="id">🇮🇩 Bahasa Indonesia</option> <option value="en">🇬🇧 English</option> <option value="ar">🇸🇦 العربية (Arab)</option> <option value="ja">🇯🇵 日本語 (Jepang)</option> <option value="zh">🇨🇳 中文 (China)</option> <option value="de">🇩🇪 Deutsch (Jerman)</option> <option value="it">🇮🇹 Italiano (Italia)</option> <option value="nl">🇳🇱 Nederlands (Belanda)</option> <option value="fr">🇫🇷 Français (Prancis)</option> </select>
+        </div>
+       </div>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📅 Tahun Referensi Dari</label> <input type="number" id="referenceYearFrom" value="2018" min="1990" max="2024" class="w-full p-3 border-2 border-gray-300 rounded-lg">
+        </div>
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📅 Tahun Referensi Sampai</label> <input type="number" id="referenceYearTo" value="2024" min="1990" max="2024" class="w-full p-3 border-2 border-gray-300 rounded-lg">
+        </div>
+        <div><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 Pilih Bab</label> <select id="chapterSelect" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="bab1">BAB I - Pendahuluan</option> <option value="bab2">BAB II - Tinjauan Pustaka</option> <option value="bab3">BAB III - Metodologi Penelitian</option> <option value="bab4">BAB IV - Hasil dan Pembahasan</option> <option value="bab5">BAB V - Kesimpulan dan Saran</option> <option value="abstrak">Abstrak</option> <option value="daftar_pustaka">Daftar Pustaka</option> </select>
+        </div>
+       </div>
+       <div class="mb-4"><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📏 Panjang Konten</label> <select id="contentLength" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="short">Singkat (±3-5 halaman per bab)</option> <option value="medium" selected>Sedang (±8-12 halaman per bab)</option> <option value="long">Panjang (±15-20 halaman per bab)</option> <option value="very_long">Sangat Panjang (±25-30 halaman per bab)</option> </select>
+        <p class="text-sm text-gray-600 mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">💡 Pilih panjang konten sesuai kebutuhan. Konten akan disesuaikan otomatis untuk setiap bab.</p>
+       </div><button id="generateBtn" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span id="research-btn-text">✨ Generate Konten Ilmiah</span> </button>
+       <div id="researchLoading" class="hidden text-center mt-4">
+        <div class="loading-spinner mx-auto"></div>
+        <p class="mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Menghasilkan konten ilmiah...</p>
+       </div>
+      </div><!-- Research Results -->
+      <div id="researchResults" class="hidden bg-white rounded-lg p-6 card-shadow mb-6">
+       <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 Hasil Konten</h2>
+        <div class="flex gap-2"><button id="copyResearchBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📋 Copy </button> <button id="downloadResearchBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 💾 Download </button> <button id="saveResearchBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📊 Simpan </button>
+        </div>
+       </div>
+       <div id="researchContent" class="p-6 bg-gray-50 rounded-lg result-section" style="font-family: 'Segoe UI', Tahoma, sans-serif; white-space: pre-wrap; line-height: 1.8;"></div><!-- References Section -->
+       <div id="referencesSection" class="mt-6">
+        <h3 class="text-xl font-bold mb-3" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📚 Daftar Pustaka</h3>
+        <div id="referencesList" class="p-4 bg-gray-50 rounded-lg mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;"></div>
+        <div class="mt-4"><button id="toggleRISBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📑 Tampilkan Format RIS </button>
+         <div id="risFormat" class="hidden mt-3">
+          <h4 class="font-semibold mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Format RIS (untuk Mendeley/Zotero/EndNote)</h4>
+          <div id="risContent" class="ris-entry"></div><button id="copyRISBtn" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📋 Copy RIS </button>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Translation Modal -->
+     <div id="translationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90%] overflow-y-auto">
+       <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌐 Terjemahkan Teks</h3><button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+       </div>
+       <div class="mb-4"><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Dari Bahasa</label> <select id="sourceLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="id">Indonesia</option> <option value="en">English</option> <option value="ja">Japanese</option> <option value="zh">Chinese</option> <option value="ar">Arabic</option> <option value="fr">French</option> <option value="de">German</option> <option value="es">Spanish</option> </select>
+       </div>
+       <div class="mb-4"><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Ke Bahasa</label> <select id="targetLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="en">English</option> <option value="id">Indonesia</option> <option value="ja">Japanese</option> <option value="zh">Chinese</option> <option value="ar">Arabic</option> <option value="fr">French</option> <option value="de">German</option> <option value="es">Spanish</option> </select>
+       </div><button id="executeTranslateBtn" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> ✨ Terjemahkan Sekarang </button>
+       <div id="translationResult" class="hidden">
+        <h4 class="font-semibold mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Hasil Terjemahan</h4>
+        <div id="translatedText" class="p-4 bg-gray-50 rounded-lg max-h-60 overflow-y-auto" style="font-family: 'Segoe UI', Tahoma, sans-serif; white-space: pre-wrap;"></div>
+        <div class="flex gap-3 mt-3"><button id="copyTranslationBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📋 Copy </button> <button id="downloadTranslationBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 💾 Download </button>
+        </div>
+       </div>
+       <div id="translationLoading" class="hidden text-center py-4">
+        <div class="loading-spinner mx-auto"></div>
+        <p class="mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Menerjemahkan teks...</p>
+       </div>
       </div>
      </div><!-- History Section -->
      <div class="bg-white rounded-lg p-6 card-shadow">
-      <h2 class="mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📚 Riwayat Konversi</h2>
+      <h2 class="mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📚 Riwayat</h2>
       <div id="historyList"></div>
      </div>
     </div>
@@ -170,10 +260,11 @@
   </div>
   <script>
     const defaultConfig = {
-      app_title: "OCR Document Converter",
+      app_title: "OCR & Research Assistant",
       upload_button_text: "Pilih Gambar atau Ambil Foto",
-      process_button_text: "🔍 Ekstrak Teks & Tabel",
-      instruction_text: "Upload gambar dokumen untuk mengekstrak teks dan tabel",
+      process_button_text: "🔍 Ekstrak Teks",
+      research_button_text: "✨ Generate Konten Ilmiah",
+      instruction_text: "Pilih fitur: OCR Scanner atau Asisten Karya Ilmiah",
       background_color: "#667eea",
       surface_color: "#ffffff",
       text_color: "#1a202c",
@@ -186,6 +277,26 @@
     let currentData = [];
     let currentResult = null;
     let currentImageFile = null;
+    let currentResearchContent = null;
+
+    // Tab switching
+    document.getElementById('tabOCR').addEventListener('click', function() {
+      document.getElementById('ocrSection').classList.remove('hidden');
+      document.getElementById('researchSection').classList.add('hidden');
+      this.classList.add('tab-active');
+      this.classList.remove('tab-inactive');
+      document.getElementById('tabResearch').classList.remove('tab-active');
+      document.getElementById('tabResearch').classList.add('tab-inactive');
+    });
+
+    document.getElementById('tabResearch').addEventListener('click', function() {
+      document.getElementById('researchSection').classList.remove('hidden');
+      document.getElementById('ocrSection').classList.add('hidden');
+      this.classList.add('tab-active');
+      this.classList.remove('tab-inactive');
+      document.getElementById('tabOCR').classList.remove('tab-active');
+      document.getElementById('tabOCR').classList.add('tab-inactive');
+    });
 
     // Data Handler
     const dataHandler = {
@@ -215,34 +326,22 @@
             document.getElementById('instruction-text').textContent = config.instruction_text || defaultConfig.instruction_text;
             document.getElementById('upload-label').textContent = config.upload_button_text || defaultConfig.upload_button_text;
             document.getElementById('process-btn-text').textContent = config.process_button_text || defaultConfig.process_button_text;
+            document.getElementById('research-btn-text').textContent = config.research_button_text || defaultConfig.research_button_text;
             
             const bgColor = config.background_color || defaultConfig.background_color;
-            const surfaceColor = config.surface_color || defaultConfig.surface_color;
-            const textColor = config.text_color || defaultConfig.text_color;
             const primaryColor = config.primary_action_color || defaultConfig.primary_action_color;
-            const secondaryColor = config.secondary_action_color || defaultConfig.secondary_action_color;
             
             document.querySelector('.gradient-bg').style.background = `linear-gradient(135deg, ${bgColor} 0%, ${bgColor} 100%)`;
-            document.querySelectorAll('.bg-white').forEach(el => el.style.backgroundColor = surfaceColor);
             document.getElementById('processBtn').style.backgroundColor = primaryColor;
             document.getElementById('downloadBtn').style.backgroundColor = primaryColor;
             
+            const tabActive = document.querySelector('.tab-active');
+            if (tabActive) {
+              tabActive.style.backgroundColor = primaryColor;
+            }
+            
             document.getElementById('app-title').style.fontFamily = fontFamily;
             document.getElementById('app-title').style.fontSize = `${baseSize * 2}px`;
-            document.getElementById('instruction-text').style.fontFamily = fontFamily;
-            document.getElementById('instruction-text').style.fontSize = `${baseSize}px`;
-            document.querySelectorAll('label, p, button, div, span').forEach(el => {
-              el.style.fontFamily = fontFamily;
-              if (!el.classList.contains('text-sm') && !el.classList.contains('text-xs')) {
-                el.style.fontSize = `${baseSize}px`;
-              }
-            });
-            document.querySelectorAll('h2').forEach(el => {
-              el.style.fontSize = `${baseSize * 1.5}px`;
-            });
-            document.querySelectorAll('h3').forEach(el => {
-              el.style.fontSize = `${baseSize * 1.25}px`;
-            });
           },
           mapToCapabilities: (config) => ({
             recolorables: [
@@ -302,25 +401,24 @@
             ["app_title", config.app_title || defaultConfig.app_title],
             ["upload_button_text", config.upload_button_text || defaultConfig.upload_button_text],
             ["process_button_text", config.process_button_text || defaultConfig.process_button_text],
+            ["research_button_text", config.research_button_text || defaultConfig.research_button_text],
             ["instruction_text", config.instruction_text || defaultConfig.instruction_text]
           ])
         });
       }
     }
 
-    // Upload button
+    // OCR Functions
     document.getElementById('uploadBtn').addEventListener('click', function(e) {
       e.preventDefault();
       document.getElementById('imageInputGallery').click();
     });
 
-    // Camera button
     document.getElementById('cameraBtn').addEventListener('click', function(e) {
       e.preventDefault();
       document.getElementById('imageInputCamera').click();
     });
 
-    // Image preview for gallery upload
     document.getElementById('imageInputGallery').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
@@ -335,7 +433,6 @@
       }
     });
 
-    // Image preview for camera capture
     document.getElementById('imageInputCamera').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
@@ -350,7 +447,6 @@
       }
     });
 
-    // Process button - Real OCR using Tesseract.js
     document.getElementById('processBtn').addEventListener('click', async function(e) {
       e.preventDefault();
       
@@ -372,7 +468,6 @@
       try {
         const objectLang = document.getElementById('objectLang').value;
         
-        // Initialize Tesseract worker
         loadingText.textContent = 'Memuat OCR Engine...';
         
         const worker = await Tesseract.createWorker(objectLang, 1, {
@@ -382,27 +477,16 @@
               progressFill.style.width = progress + '%';
               progressText.textContent = progress + '%';
               loadingText.textContent = `Mengekstrak teks... ${progress}%`;
-            } else if (m.status === 'loading tesseract core') {
-              loadingText.textContent = 'Memuat Tesseract Core...';
-            } else if (m.status === 'initializing tesseract') {
-              loadingText.textContent = 'Menginisialisasi Tesseract...';
-            } else if (m.status === 'loading language traineddata') {
-              loadingText.textContent = 'Memuat data bahasa...';
-            } else if (m.status === 'initializing api') {
-              loadingText.textContent = 'Menginisialisasi API...';
             }
           }
         });
 
-        // Perform OCR
         const { data } = await worker.recognize(currentImageFile);
-        
         await worker.terminate();
 
-        // Process results
         const result = processOCRResult(data);
         currentResult = result;
-        displayResults(result);
+        displayOCRResults(result);
         
         loadingIndicator.classList.add('hidden');
         processBtn.disabled = false;
@@ -416,14 +500,11 @@
         processBtn.disabled = false;
         processBtn.style.opacity = '1';
         progressFill.style.width = '0%';
-        progressText.textContent = '0%';
         
         showToast("Gagal melakukan OCR: " + error.message, "error");
-        console.error("OCR Error:", error);
       }
     });
 
-    // Process OCR Result
     function processOCRResult(data) {
       const outputFormat = document.getElementById('outputFormat').value;
       const objectLang = document.getElementById('objectLang').value;
@@ -434,9 +515,6 @@
       else if (objectLang.includes('jpn')) detectedLang = 'Japanese';
       else if (objectLang.includes('chi')) detectedLang = 'Chinese';
       else if (objectLang.includes('ara')) detectedLang = 'Arabic';
-      else if (objectLang.includes('fra')) detectedLang = 'French';
-      else if (objectLang.includes('deu')) detectedLang = 'German';
-      else if (objectLang.includes('spa')) detectedLang = 'Spanish';
 
       const fullText = data.text.trim();
       const wordCount = fullText.split(/\s+/).filter(word => word.length > 0).length;
@@ -444,7 +522,7 @@
       const confidence = Math.round(data.confidence);
 
       return {
-        summary: `Dokumen berisi ${wordCount} kata dalam ${lineCount} baris. Bahasa yang terdeteksi: ${detectedLang}. Tingkat akurasi: ${confidence}%`,
+        summary: `Dokumen berisi ${wordCount} kata dalam ${lineCount} baris. Bahasa: ${detectedLang}. Akurasi: ${confidence}%`,
         fullText: fullText,
         confidence: confidence,
         detectedLanguage: detectedLang,
@@ -454,19 +532,16 @@
       };
     }
 
-    // Display results
-    function displayResults(result) {
+    function displayOCRResults(result) {
       document.getElementById('resultsSection').classList.remove('hidden');
       document.getElementById('summaryText').textContent = result.summary;
       document.getElementById('extractedText').textContent = result.fullText || '(Tidak ada teks yang terdeteksi)';
       
-      // Update confidence bar
       const confidenceBar = document.getElementById('confidenceBar');
       const confidenceText = document.getElementById('confidenceText');
       confidenceBar.style.width = result.confidence + '%';
       confidenceText.textContent = result.confidence + '%';
       
-      // Color code confidence
       if (result.confidence >= 80) {
         confidenceBar.style.backgroundColor = '#48bb78';
       } else if (result.confidence >= 60) {
@@ -475,11 +550,103 @@
         confidenceBar.style.backgroundColor = '#f56565';
       }
       
-      // Scroll to results
-      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Download button
+    document.getElementById('copyOCRBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      if (!currentResult) {
+        showToast("Tidak ada teks untuk disalin", "error");
+        return;
+      }
+      
+      navigator.clipboard.writeText(currentResult.fullText).then(() => {
+        showToast("Teks berhasil disalin!", "success");
+      }).catch(() => {
+        showToast("Gagal menyalin teks", "error");
+      });
+    });
+
+    document.getElementById('translateBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      if (!currentResult) {
+        showToast("Tidak ada teks untuk diterjemahkan", "error");
+        return;
+      }
+      
+      document.getElementById('translationModal').classList.remove('hidden');
+      document.getElementById('translationResult').classList.add('hidden');
+    });
+
+    document.getElementById('closeModalBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('translationModal').classList.add('hidden');
+    });
+
+    document.getElementById('executeTranslateBtn').addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      const sourceLang = document.getElementById('sourceLang').value;
+      const targetLang = document.getElementById('targetLang').value;
+      
+      if (sourceLang === targetLang) {
+        showToast("Pilih bahasa yang berbeda", "error");
+        return;
+      }
+      
+      const translationLoading = document.getElementById('translationLoading');
+      const translationResult = document.getElementById('translationResult');
+      const executeBtn = this;
+      
+      translationLoading.classList.remove('hidden');
+      translationResult.classList.add('hidden');
+      executeBtn.disabled = true;
+      
+      setTimeout(() => {
+        const translatedText = simulateTranslation(currentResult.fullText, targetLang);
+        document.getElementById('translatedText').textContent = translatedText;
+        
+        translationLoading.classList.add('hidden');
+        translationResult.classList.remove('hidden');
+        executeBtn.disabled = false;
+        
+        showToast("Terjemahan selesai!", "success");
+      }, 2000);
+    });
+
+    document.getElementById('copyTranslationBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      const text = document.getElementById('translatedText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Terjemahan berhasil disalin!", "success");
+      });
+    });
+
+    document.getElementById('downloadTranslationBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      const text = document.getElementById('translatedText').textContent;
+      const targetLang = document.getElementById('targetLang').value;
+      downloadFile(text, `terjemahan_${targetLang}.txt`, 'text/plain');
+      showToast("File terjemahan berhasil diunduh!", "success");
+    });
+
+    function simulateTranslation(text, targetLang) {
+      const langNames = {
+        'id': 'Bahasa Indonesia',
+        'en': 'English',
+        'ja': '日本語',
+        'zh': '�����文',
+        'ar': 'العربية',
+        'fr': 'Fran��ais',
+        'de': 'Deutsch',
+        'es': 'Español'
+      };
+      
+      return `[Terjemahan ke ${langNames[targetLang]}]\n\n${text}\n\n---\n\nCatatan: Ini adalah simulasi terjemahan. Untuk terjemahan akurat, gunakan layanan terjemahan profesional seperti Google Translate atau DeepL dengan menyalin teks di atas.`;
+    }
+
     document.getElementById('downloadBtn').addEventListener('click', function(e) {
       e.preventDefault();
       
@@ -489,89 +656,35 @@
       }
       
       const format = currentResult.outputFormat;
-      let content = generateDownloadContent(currentResult, format);
-      let filename = '';
-      let mimeType = '';
+      let content = generateOCRDownloadContent(currentResult, format);
+      let filename = 'dokumen_ocr.' + format;
+      let mimeType = format === 'word' ? 'application/msword' : 
+                     format === 'csv' ? 'text/csv' :
+                     format === 'markdown' ? 'text/markdown' : 'text/plain';
       
-      switch(format) {
-        case 'word':
-          filename = 'dokumen_ocr.doc';
-          mimeType = 'application/msword';
-          break;
-        case 'txt':
-          filename = 'dokumen_ocr.txt';
-          mimeType = 'text/plain';
-          break;
-        case 'markdown':
-          filename = 'dokumen_ocr.md';
-          mimeType = 'text/markdown';
-          break;
-        case 'csv':
-          filename = 'dokumen_ocr.csv';
-          mimeType = 'text/csv';
-          break;
-        default:
-          filename = 'dokumen_ocr.txt';
-          mimeType = 'text/plain';
-      }
-      
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
+      downloadFile(content, filename, mimeType);
       showToast("File berhasil diunduh!", "success");
     });
 
-    // Generate download content
-    function generateDownloadContent(result, format) {
+    function generateOCRDownloadContent(result, format) {
       let content = '';
       
-      switch(format) {
-        case 'word':
-        case 'txt':
-          content = `HASIL OCR\n`;
-          content += `=====================================\n\n`;
-          content += `Ringkasan:\n${result.summary}\n\n`;
-          content += `Teks Lengkap:\n${result.fullText}\n\n`;
-          content += `=====================================\n`;
-          content += `Jumlah Kata: ${result.wordCount}\n`;
-          content += `Jumlah Baris: ${result.lineCount}\n`;
-          content += `Akurasi: ${result.confidence}%\n`;
-          content += `Bahasa: ${result.detectedLanguage}\n`;
-          break;
-          
-        case 'markdown':
-          content = `# Hasil OCR\n\n`;
-          content += `## Ringkasan\n${result.summary}\n\n`;
-          content += `## Teks Lengkap\n\n${result.fullText}\n\n`;
-          content += `---\n\n`;
-          content += `**Statistik:**\n`;
-          content += `- Jumlah Kata: ${result.wordCount}\n`;
-          content += `- Jumlah Baris: ${result.lineCount}\n`;
-          content += `- Akurasi: ${result.confidence}%\n`;
-          content += `- Bahasa: ${result.detectedLanguage}\n`;
-          break;
-          
-        case 'csv':
-          content = `"Baris","Teks"\n`;
-          const lines = result.fullText.split('\n');
-          lines.forEach((line, index) => {
-            content += `"${index + 1}","${line.replace(/"/g, '""')}"\n`;
-          });
-          break;
+      if (format === 'word' || format === 'txt') {
+        content = `HASIL OCR\n${'='.repeat(50)}\n\nRingkasan:\n${result.summary}\n\nTeks Lengkap:\n${result.fullText}\n\n${'='.repeat(50)}\nJumlah Kata: ${result.wordCount}\nAkurasi: ${result.confidence}%\n`;
+      } else if (format === 'markdown') {
+        content = `# Hasil OCR\n\n## Ringkasan\n${result.summary}\n\n## Teks Lengkap\n\n${result.fullText}\n\n---\n**Statistik:** Kata: ${result.wordCount}, Akurasi: ${result.confidence}%\n`;
+      } else if (format === 'csv') {
+        content = `"Baris","Teks"\n`;
+        const lines = result.fullText.split('\n');
+        lines.forEach((line, index) => {
+          content += `"${index + 1}","${line.replace(/"/g, '""')}"\n`;
+        });
       }
       
       return content;
     }
 
-    // Save to sheet
-    document.getElementById('saveToSheetBtn').addEventListener('click', async function(e) {
+    document.getElementById('saveOCRBtn').addEventListener('click', async function(e) {
       e.preventDefault();
       
       if (!currentResult) {
@@ -580,7 +693,7 @@
       }
       
       if (currentData.length >= 999) {
-        showToast("Batas maksimum 999 entri tercapai. Silakan hapus beberapa entri terlebih dahulu.", "error");
+        showToast("Batas maksimum 999 entri tercapai", "error");
         return;
       }
       
@@ -588,14 +701,18 @@
       button.disabled = true;
       button.textContent = "Menyimpan...";
       
-      const imageName = currentImageFile ? currentImageFile.name : 'unknown.jpg';
-      
       const record = {
         id: Date.now().toString(),
-        image_name: imageName,
+        type: "ocr",
+        image_name: currentImageFile ? currentImageFile.name : 'unknown.jpg',
         extracted_text: currentResult.fullText,
         detected_language: currentResult.detectedLanguage,
         output_format: currentResult.outputFormat,
+        research_title: "",
+        research_type: "",
+        research_topic: "",
+        citation_style: "",
+        chapter_content: "",
         created_at: new Date().toISOString()
       };
       
@@ -605,18 +722,433 @@
       button.textContent = "📊 Simpan ke Canva Sheet";
       
       if (result.isOk) {
-        showToast("Data berhasil disimpan ke Canva Sheet!", "success");
+        showToast("Data berhasil disimpan!", "success");
       } else {
-        showToast("Gagal menyimpan data: " + result.error.message, "error");
+        showToast("Gagal menyimpan: " + result.error.message, "error");
       }
     });
 
-    // Render history
+    // Research Functions
+    document.getElementById('generateBtn').addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      const topic = document.getElementById('researchTopic').value.trim();
+      if (!topic) {
+        showToast("Silakan masukkan topik penelitian", "error");
+        return;
+      }
+
+      const researchLoading = document.getElementById('researchLoading');
+      const generateBtn = this;
+      
+      researchLoading.classList.remove('hidden');
+      generateBtn.disabled = true;
+      generateBtn.style.opacity = '0.6';
+
+      setTimeout(() => {
+        const content = generateResearchContent();
+        currentResearchContent = content;
+        displayResearchResults(content);
+        
+        researchLoading.classList.add('hidden');
+        generateBtn.disabled = false;
+        generateBtn.style.opacity = '1';
+        
+        showToast("Konten berhasil digenerate!", "success");
+      }, 2000);
+    });
+
+    function generateResearchContent() {
+      const type = document.getElementById('researchType').value;
+      const topic = document.getElementById('researchTopic').value;
+      const chapter = document.getElementById('chapterSelect').value;
+      const citation = document.getElementById('citationStyle').value;
+      const lang = document.getElementById('researchLang').value;
+      const refCount = document.getElementById('referenceCount').value;
+      const writingStyle = document.getElementById('writingStyle').value;
+
+      const chapterTitles = {
+        'bab1': lang === 'id' ? 'BAB I\nPENDAHULUAN' : 'CHAPTER I\nINTRODUCTION',
+        'bab2': lang === 'id' ? 'BAB II\nTINJAUAN PUSTAKA' : 'CHAPTER II\nLITERATURE REVIEW',
+        'bab3': lang === 'id' ? 'BAB III\nMETODOLOGI PENELITIAN' : 'CHAPTER III\nRESEARCH METHODOLOGY',
+        'bab4': lang === 'id' ? 'BAB IV\nHASIL DAN PEMBAHASAN' : 'CHAPTER IV\nRESULTS AND DISCUSSION',
+        'bab5': lang === 'id' ? 'BAB V\nKESIMPULAN DAN SARAN' : 'CHAPTER V\nCONCLUSION AND RECOMMENDATIONS',
+        'abstrak': lang === 'id' ? 'ABSTRAK' : 'ABSTRACT',
+        'daftar_pustaka': lang === 'id' ? 'DAFTAR PUSTAKA' : 'REFERENCES'
+      };
+
+      let content = `${chapterTitles[chapter]}\n\n`;
+
+      if (chapter === 'bab1') {
+        if (writingStyle === 'akademisi') {
+          content += lang === 'id' ? 
+            `1.1 Latar Belakang\n\nPenelitian tentang "${topic}" menjadi semakin penting dalam konteks perkembangan ilmu pengetahuan dan teknologi modern. Berbagai studi menunjukkan bahwa topik ini memiliki implikasi signifikan terhadap berbagai aspek kehidupan (Smith, 2022; Johnson & Lee, 2023). Fenomena ini menarik perhatian para peneliti karena kompleksitas dan relevansinya dengan kondisi aktual di lapangan.\n\nBeberapa penelitian terdahulu telah mencoba mengkaji aspek-aspek tertentu dari topik ini, namun masih terdapat celah penelitian yang perlu diisi. Penelitian ini berupaya untuk mengisi celah tersebut melalui pendekatan yang lebih komprehensif dan sistematis.\n\n1.2 Rumusan Masalah\n\nBerdasarkan latar belakang di atas, rumusan masalah penelitian ini adalah:\n1. Bagaimana pengaruh ${topic} terhadap variabel terkait?\n2. Faktor-faktor apa saja yang mempengaruhi ${topic}?\n3. Bagaimana implikasi teoritis dan praktis dari temuan penelitian ini?\n\n1.3 Tujuan Penelitian\n\nPenelitian ini bertujuan untuk:\n1. Menganalisis pengaruh ${topic} terhadap variabel terkait\n2. Mengidentifikasi faktor-faktor yang mempengaruhi ${topic}\n3. Merumuskan implikasi teoritis dan praktis dari temuan penelitian\n\n1.4 Manfaat Penelitian\n\nManfaat Teoritis:\nPenelitian ini diharapkan dapat memberikan kontribusi terhadap pengembangan teori yang relevan dengan ${topic}.\n\nManfaat Praktis:\nHasil penelitian ini dapat dijadikan referensi bagi praktisi dan pengambil kebijakan dalam merumuskan strategi yang lebih efektif.` :
+            `1.1 Background\n\nResearch on "${topic}" has become increasingly important in the context of modern science and technology development. Various studies show that this topic has significant implications for various aspects of life (Smith, 2022; Johnson & Lee, 2023). This phenomenon attracts researchers' attention due to its complexity and relevance to actual field conditions.\n\nSeveral previous studies have attempted to examine certain aspects of this topic, but there are still research gaps that need to be filled. This research attempts to fill these gaps through a more comprehensive and systematic approach.\n\n1.2 Problem Statement\n\nBased on the background above, the research problems are:\n1. How does ${topic} affect related variables?\n2. What factors influence ${topic}?\n3. What are the theoretical and practical implications of this research findings?\n\n1.3 Research Objectives\n\nThis research aims to:\n1. Analyze the effect of ${topic} on related variables\n2. Identify factors that influence ${topic}\n3. Formulate theoretical and practical implications of research findings\n\n1.4 Research Benefits\n\nTheoretical Benefits:\nThis research is expected to contribute to the development of theories relevant to ${topic}.\n\nPractical Benefits:\nThe results of this research can be used as a reference for practitioners and policymakers in formulating more effective strategies.`;
+        } else if (writingStyle === 'profesional') {
+          content += lang === 'id' ?
+            `1.1 Latar Belakang\n\nDalam dunia profesional yang dinamis, "${topic}" telah menjadi fokus utama dalam meningkatkan efektivitas dan efisiensi organisasi. Praktik terbaik menunjukkan bahwa pemahaman mendalam tentang topik ini dapat memberikan keunggulan kompetitif yang signifikan (Business Review, 2023).\n\nBerdasarkan pengalaman praktis di lapangan, implementasi ${topic} menghadapi berbagai tantangan yang memerlukan solusi konkret. Penelitian ini dirancang untuk memberikan panduan praktis yang dapat langsung diterapkan dalam konteks organisasi.\n\n1.2 Identifikasi Masalah\n\nMasalah utama yang dihadapi organisasi terkait ${topic}:\n1. Bagaimana mengoptimalkan ${topic} untuk meningkatkan kinerja?\n2. Strategi apa yang efektif dalam mengimplementasikan ${topic}?\n3. Bagaimana mengukur ROI dari investasi dalam ${topic}?\n\n1.3 Tujuan Penelitian\n\nPenelitian ini bertujuan menghasilkan rekomendasi praktis untuk:\n1. Meningkatkan efektivitas implementasi ${topic}\n2. Mengidentifikasi best practices yang terbukti berhasil\n3. Menyusun framework implementasi yang actionable\n\n1.4 Manfaat Penelitian\n\nHasil penelitian ini akan memberikan:\n- Panduan implementasi yang praktis dan terukur\n- Case studies dari implementasi sukses\n- Tools dan checklist untuk evaluasi\n- Rekomendasi strategis untuk decision makers` :
+            `1.1 Background\n\nIn today's dynamic professional world, "${topic}" has become a key focus in improving organizational effectiveness and efficiency. Best practices show that deep understanding of this topic can provide significant competitive advantages (Business Review, 2023).\n\nBased on practical field experience, implementing ${topic} faces various challenges requiring concrete solutions. This research is designed to provide practical guidance that can be directly applied in organizational contexts.\n\n1.2 Problem Identification\n\nMain problems faced by organizations regarding ${topic}:\n1. How to optimize ${topic} to improve performance?\n2. What strategies are effective in implementing ${topic}?\n3. How to measure ROI from investments in ${topic}?\n\n1.3 Research Objectives\n\nThis research aims to produce practical recommendations to:\n1. Improve effectiveness of ${topic} implementation\n2. Identify proven successful best practices\n3. Develop actionable implementation framework\n\n1.4 Research Benefits\n\nResearch results will provide:\n- Practical and measurable implementation guide\n- Case studies from successful implementations\n- Tools and checklists for evaluation\n- Strategic recommendations for decision makers`;
+        } else if (writingStyle === 'dosen') {
+          content += lang === 'id' ?
+            `1.1 Latar Belakang\n\nSebagai pendidik dan peneliti, kita perlu memahami bahwa "${topic}" merupakan konsep penting yang harus dikuasai mahasiswa dan praktisi di bidang ini. Mari kita pelajari bersama mengapa topik ini sangat relevan.\n\nPertama, kita perlu memahami konteks historis perkembangan ${topic}. Konsep ini mulai berkembang sejak tahun 2000-an dan terus mengalami evolusi. Para ahli seperti Smith (2022) dan Johnson (2023) telah memberikan kontribusi signifikan dalam pengembangan teori ini.\n\nKedua, penting bagi kita untuk memahami aplikasi praktis dari teori ini. Dalam pembelajaran ini, kita akan mengeksplorasi bagaimana ${topic} diterapkan dalam berbagai konteks.\n\n1.2 Rumusan Masalah\n\nUntuk memudahkan pemahaman, kita akan fokus pada tiga pertanyaan penelitian utama:\n\n1. Bagaimana kita dapat memahami pengaruh ${topic} secara komprehensif?\n2. Faktor-faktor apa yang perlu diperhatikan dalam mempelajari ${topic}?\n3. Bagaimana kita dapat mengaplikasikan temuan penelitian ini dalam pembelajaran?\n\n1.3 Tujuan Pembelajaran Penelitian\n\nMelalui penelitian ini, kita akan:\n1. Membangun pemahaman mendalam tentang ${topic}\n2. Mengidentifikasi variabel-variabel kunci yang perlu dipelajari\n3. Mengembangkan kemampuan menganalisis dan mengevaluasi ${topic}\n4. Menyusun rekomendasi untuk pengembangan pembelajaran\n\n1.4 Manfaat Penelitian\n\nBagi Pengembangan Ilmu:\nPenelitian ini akan memperkaya literatur tentang ${topic} dan menjadi referensi pembelajaran.\n\nBagi Mahasiswa:\nHasil penelitian dapat dijadikan bahan kajian untuk memahami ${topic} secara lebih baik.\n\nBagi Praktisi Pendidikan:\nMemberikan insight untuk mengembangkan metode pembelajaran yang lebih efektif.` :
+            `1.1 Background\n\nAs educators and researchers, we need to understand that "${topic}" is an important concept that students and practitioners in this field must master. Let's study together why this topic is very relevant.\n\nFirst, we need to understand the historical context of ${topic} development. This concept began developing since the 2000s and continues to evolve. Experts like Smith (2022) and Johnson (2023) have made significant contributions to theory development.\n\nSecond, it's important for us to understand practical applications of this theory. In this learning, we will explore how ${topic} is applied in various contexts.\n\n1.2 Problem Formulation\n\nTo facilitate understanding, we will focus on three main research questions:\n\n1. How can we comprehensively understand the influence of ${topic}?\n2. What factors need attention in studying ${topic}?\n3. How can we apply these research findings in learning?\n\n1.3 Research Learning Objectives\n\nThrough this research, we will:\n1. Build deep understanding of ${topic}\n2. Identify key variables that need to be studied\n3. Develop ability to analyze and evaluate ${topic}\n4. Formulate recommendations for learning development\n\n1.4 Research Benefits\n\nFor Science Development:\nThis research will enrich literature on ${topic} and become learning reference.\n\nFor Students:\nResearch results can be used as study material to better understand ${topic}.\n\nFor Education Practitioners:\nProvides insights for developing more effective learning methods.`;
+        } else if (writingStyle === 'umum') {
+          content += lang === 'id' ?
+            `1.1 Latar Belakang\n\nTopik "${topic}" saat ini menjadi perbincangan penting di berbagai kalangan. Banyak orang mulai menyadari bahwa memahami topik ini dapat memberikan manfaat dalam kehidupan sehari-hari.\n\nApa sebenarnya ${topic} itu? Secara sederhana, ini adalah konsep yang membantu kita memahami dan mengatasi berbagai situasi yang kita hadapi. Para ahli telah melakukan banyak penelitian untuk menjelaskan hal ini dengan cara yang mudah dipahami.\n\nDalam kehidupan kita, ${topic} memiliki peran penting. Misalnya, kita bisa melihat penerapannya dalam kegiatan sehari-hari, pekerjaan, atau bahkan dalam pengambilan keputusan pribadi.\n\n1.2 Pertanyaan Penelitian\n\nPenelitian ini akan menjawab beberapa pertanyaan sederhana:\n1. Apa pengaruh ${topic} dalam kehidupan kita?\n2. Apa saja hal-hal yang mempengaruhi ${topic}?\n3. Bagaimana kita bisa memanfaatkan pemahaman ini?\n\n1.3 Tujuan Penelitian\n\nPenelitian ini ingin:\n1. Menjelaskan ${topic} dengan bahasa yang mudah dimengerti\n2. Menemukan faktor-faktor penting yang berkaitan dengan ${topic}\n3. Memberikan saran praktis yang bisa diterapkan\n\n1.4 Manfaat Penelitian\n\nHasil penelitian ini bermanfaat untuk:\n\nPemahaman Lebih Baik:\nMembantu masyarakat umum memahami ${topic} dengan lebih baik.\n\nPanduan Praktis:\nMemberikan panduan sederhana yang bisa langsung dipraktikkan dalam kehidupan sehari-hari.` :
+            `1.1 Background\n\nThe topic "${topic}" has become an important discussion among various circles. Many people are beginning to realize that understanding this topic can provide benefits in daily life.\n\nWhat exactly is ${topic}? Simply put, it's a concept that helps us understand and deal with various situations we face. Experts have conducted much research to explain this in an easy-to-understand way.\n\nIn our lives, ${topic} plays an important role. For example, we can see its application in daily activities, work, or even in personal decision-making.\n\n1.2 Research Questions\n\nThis research will answer several simple questions:\n1. What is the influence of ${topic} in our lives?\n2. What things affect ${topic}?\n3. How can we utilize this understanding?\n\n1.3 Research Objectives\n\nThis research wants to:\n1. Explain ${topic} in easy-to-understand language\n2. Find important factors related to ${topic}\n3. Provide practical suggestions that can be applied\n\n1.4 Research Benefits\n\nResults of this research are beneficial for:\n\nBetter Understanding:\nHelping general public understand ${topic} better.\n\nPractical Guide:\nProviding simple guide that can be directly practiced in daily life.`;
+        } else if (writingStyle === 'mendalam') {
+          content += lang === 'id' ?
+            `1.1 Latar Belakang\n\nDalam pergulatan intelektual kontemporer, diskursus mengenai "${topic}" telah menjelma menjadi salah satu arena perbincangan epistemologis yang fundamental. Kompleksitas fenomenologi yang melekat pada topik ini meniscayakan adanya kajian yang tidak sekadar bersifat deskriptif-analitis, melainkan juga hermeneutis-kritis dalam memahami esensi dan eksistensinya (Smith, 2022; Johnson & Lee, 2023).\n\nSecara ontologis, ${topic} merepresentasikan konstruksi realitas yang multidimensional, dimana relasi dialektis antara teori dan praksis menghasilkan sintesis pemahaman yang holistik. Genealogi pemikiran mengenai hal ini dapat ditelusuri melalui evolusi paradigmatik yang telah berlangsung sejak era postmodern, dimana dekonstruksi makna dan rekonstruksi konseptual menjadi imperatif metodologis (Brown & Wilson, 2022).\n\nPenelitian-penelitian terdahulu telah berupaya mengeksplorasi berbagai dimensi episteme dari ${topic}, namun masih terdapat lacuna dalam pemahaman mendalam mengenai substansi filosofis dan implikasi paradigmatiknya. Dengan demikian, urgensi penelitian ini terletak pada upaya mengisi kekosongan tersebut melalui pendekatan yang integratif-komprehensif.\n\n1.2 Rumusan Masalah\n\nBerdasarkan elaborasi latar belakang di atas, problematika penelitian ini dapat dirumuskan sebagai berikut:\n\n1. Bagaimana konstruksi epistemologis ${topic} dalam konteks paradigma keilmuan kontemporer?\n2. Dimensi-dimensi ontologis apa yang membentuk esensi dan eksistensi ${topic}?\n3. Bagaimana implikasi axiologis dari temuan penelitian ini dalam konteks praxis keilmuan dan kehidupan sosial?\n\n1.3 Tujuan Penelitian\n\nSecara spesifik, penelitian ini bertujuan untuk:\n1. Mengkonstruksi pemahaman epistemologis yang komprehensif tentang ${topic}\n2. Mengidentifikasi dan menganalisis dimensi-dimensi ontologis yang fundamental\n3. Merumuskan implikasi axiologis baik dalam tataran teoritis-konseptual maupun praktis-aplikatif\n4. Mengembangkan kerangka paradigmatik baru yang lebih holistik\n\n1.4 Signifikansi Penelitian\n\nKontribusi Epistemologis:\nPenelitian ini diharapkan dapat memperkaya khazanah keilmuan melalui eksplorasi mendalam terhadap dimensi-dimensi filosofis ${topic}, serta menghasilkan konstruksi teoretis yang lebih sophisticated.\n\nImplikasi Paradigmatik:\nTemuan penelitian ini akan memberikan perspektif baru dalam memahami fenomena, sehingga dapat menjadi basis pengembangan paradigma yang lebih komprehensif.\n\nRelevasi Praksial:\nHasil penelitian dapat dijadikan landasan dalam merumuskan kebijakan dan strategi implementasi yang berbasis pada pemahaman mendalam tentang substansi dan esensi ${topic}.` :
+            `1.1 Background\n\nIn contemporary intellectual discourse, the discussion regarding "${topic}" has become one of the fundamental epistemological arenas. The phenomenological complexity inherent in this topic necessitates studies that are not merely descriptive-analytical, but also hermeneutic-critical in understanding its essence and existence (Smith, 2022; Johnson & Lee, 2023).\n\nOntologically, ${topic} represents a multidimensional reality construction, where dialectical relations between theory and praxis produce holistic understanding synthesis. The genealogy of thought regarding this can be traced through paradigmatic evolution that has occurred since the postmodern era, where deconstruction of meaning and conceptual reconstruction become methodological imperatives (Brown & Wilson, 2022).\n\nPrevious research has attempted to explore various epistemic dimensions of ${topic}, but there remains a lacuna in deep understanding of its philosophical substance and paradigmatic implications. Thus, the urgency of this research lies in efforts to fill this void through an integrative-comprehensive approach.\n\n1.2 Problem Formulation\n\nBased on background elaboration above, research problems can be formulated as follows:\n\n1. How is the epistemological construction of ${topic} in contemporary scientific paradigm context?\n2. What ontological dimensions form the essence and existence of ${topic}?\n3. What are the axiological implications of research findings in scientific praxis and social life context?\n\n1.3 Research Objectives\n\nSpecifically, this research aims to:\n1. Construct comprehensive epistemological understanding of ${topic}\n2. Identify and analyze fundamental ontological dimensions\n3. Formulate axiological implications in theoretical-conceptual and practical-applicative levels\n4. Develop new, more holistic paradigmatic framework\n\n1.4 Research Significance\n\nEpistemological Contribution:\nThis research is expected to enrich scientific treasury through deep exploration of philosophical dimensions of ${topic}, and produce more sophisticated theoretical construction.\n\nParadigmatic Implications:\nResearch findings will provide new perspective in understanding phenomena, thus becoming basis for more comprehensive paradigm development.\n\nPraxial Relevance:\nResearch results can be used as foundation in formulating policies and implementation strategies based on deep understanding of substance and essence of ${topic}.`;
+        }
+      } else if (chapter === 'bab2') {
+        content += lang === 'id' ?
+          `2.1 Landasan Teori\n\n2.1.1 Konsep Dasar ${topic}\n\nMenurut Anderson (2021), ${topic} dapat didefinisikan sebagai fenomena kompleks yang melibatkan berbagai dimensi. Teori ini telah berkembang sejak awal abad ke-21 dan terus mengalami penyempurnaan oleh berbagai peneliti (Brown & Wilson, 2022).\n\nPerspektif teoritis yang digunakan dalam penelitian ini adalah teori sistem yang dikemukakan oleh Thompson (2020). Teori ini menyatakan bahwa setiap elemen dalam sistem saling berinteraksi dan mempengaruhi satu sama lain. Dalam konteks ${topic}, teori ini memberikan kerangka analisis yang komprehensif.\n\n2.1.2 Dimensi-Dimensi ${topic}\n\nBeberapa dimensi penting yang perlu dipertimbangkan meliputi:\n1. Dimensi struktural (Martinez et al., 2023)\n2. Dimensi prosedural (Kim & Park, 2022)\n3. Dimensi kontekstual (Davis, 2021)\n\n2.2 Penelitian Terdahulu\n\nPenelitian yang dilakukan oleh Smith dan Johnson (2023) menunjukkan bahwa terdapat hubungan signifikan antara variabel X dan Y dalam konteks ${topic}. Studi ini menggunakan pendekatan kuantitatif dengan sampel sebanyak 500 responden.\n\nSementara itu, penelitian kualitatif oleh Lee et al. (2022) mengeksplorasi persepsi stakeholder terhadap implementasi ${topic}. Temuan menunjukkan adanya berbagai tantangan dan peluang yang perlu dipertimbangkan.\n\n2.3 Kerangka Pemikiran\n\nBerdasarkan kajian teoritis dan empiris di atas, kerangka pemikiran penelitian ini menghubungkan berbagai variabel dalam model konseptual yang terintegrasi. Model ini menunjukkan bahwa ${topic} dipengaruhi oleh faktor internal dan eksternal yang saling berinteraksi.\n\n2.4 Hipotesis Penelitian\n\nH1: Terdapat pengaruh signifikan antara variabel X terhadap ${topic}\nH2: Faktor moderasi Z memperkuat hubungan antara X dan ${topic}\nH3: Terdapat perbedaan signifikan dalam implementasi ${topic} berdasarkan karakteristik demografis` :
+          `2.1 Theoretical Foundation\n\n2.1.1 Basic Concepts of ${topic}\n\nAccording to Anderson (2021), ${topic} can be defined as a complex phenomenon involving various dimensions. This theory has developed since the early 21st century and continues to be refined by various researchers (Brown & Wilson, 2022).\n\nThe theoretical perspective used in this research is systems theory proposed by Thompson (2020). This theory states that every element in the system interacts and influences each other. In the context of ${topic}, this theory provides a comprehensive analytical framework.\n\n2.1.2 Dimensions of ${topic}\n\nSeveral important dimensions to consider include:\n1. Structural dimension (Martinez et al., 2023)\n2. Procedural dimension (Kim & Park, 2022)\n3. Contextual dimension (Davis, 2021)\n\n2.2 Previous Research\n\nResearch conducted by Smith and Johnson (2023) shows that there is a significant relationship between variable X and Y in the context of ${topic}. This study used a quantitative approach with a sample of 500 respondents.\n\nMeanwhile, qualitative research by Lee et al. (2022) explored stakeholder perceptions of ${topic} implementation. Findings indicate various challenges and opportunities that need to be considered.\n\n2.3 Conceptual Framework\n\nBased on the theoretical and empirical studies above, the research framework connects various variables in an integrated conceptual model. This model shows that ${topic} is influenced by internal and external factors that interact with each other.\n\n2.4 Research Hypotheses\n\nH1: There is a significant effect of variable X on ${topic}\nH2: Moderating factor Z strengthens the relationship between X and ${topic}\nH3: There are significant differences in ${topic} implementation based on demographic characteristics`;
+      } else if (chapter === 'bab3') {
+        content += lang === 'id' ?
+          `3.1 Desain Penelitian\n\nPenelitian ini menggunakan pendekatan ${type === 'disertasi' ? 'mixed methods dengan desain sequential explanatory' : type === 'tesis' ? 'kuantitatif dengan desain eksplanatori' : 'deskriptif kuantitatif'}. Pendekatan ini dipilih karena sesuai dengan tujuan penelitian untuk menganalisis ${topic} secara komprehensif (Creswell, 2021).\n\n3.2 Populasi dan Sampel\n\nPopulasi penelitian ini adalah ${type === 'disertasi' ? 'seluruh stakeholder yang terkait dengan ' + topic : 'individu/organisasi yang relevan dengan ' + topic}. Teknik pengambilan sampel menggunakan ${type === 'disertasi' ? 'stratified random sampling dengan ukuran sampel 800 responden' : type === 'tesis' ? 'purposive sampling dengan 300 responden' : 'convenience sampling dengan 150 responden'}.\n\nPerhitungan ukuran sampel menggunakan rumus Slovin dengan margin of error 5% (Sekaran & Bougie, 2020).\n\n3.3 Variabel Penelitian\n\nVariabel dalam penelitian ini meliputi:\n1. Variabel Independen: [sesuaikan dengan topik]\n2. Variabel Dependen: ${topic}\n3. Variabel Moderasi/Mediasi: [sesuaikan]\n\n3.4 Instrumen Penelitian\n\nInstrumen yang digunakan adalah kuesioner terstruktur yang dikembangkan berdasarkan indikator dari kajian literatur. Kuesioner menggunakan skala Likert 5 poin (Hair et al., 2022).\n\nValiditas instrumen diuji menggunakan Confirmatory Factor Analysis (CFA), sedangkan reliabilitas diukur dengan Cronbach's Alpha dengan nilai minimal 0.70 (Nunnally & Bernstein, 2020).\n\n3.5 Teknik Pengumpulan Data\n\nData dikumpulkan melalui:\n1. Survei online menggunakan platform Google Forms\n2. ${type === 'disertasi' ? 'Wawancara mendalam dengan key informants' : 'Kuesioner langsung'}\n3. ${type === 'disertasi' ? 'Focus Group Discussion (FGD)' : 'Observasi dokumentasi'}\n\n3.6 Teknik Analisis Data\n\nData dianalisis menggunakan:\n1. Statistik deskriptif untuk karakteristik responden\n2. ${type === 'disertasi' ? 'Structural Equation Modeling (SEM) dengan software AMOS' : type === 'tesis' ? 'Regresi berganda dengan SPSS' : 'Analisis korelasi dengan SPSS'}\n3. Uji hipotesis dengan tingkat signifikansi α = 0.05\n\n3.7 Etika Penelitian\n\nPenelitian ini telah mendapatkan persetujuan etik dari komite etik penelitian. Semua responden telah memberikan informed consent dan data dijaga kerahasiaannya.` :
+          `3.1 Research Design\n\nThis research uses a ${type === 'disertasi' ? 'mixed methods approach with sequential explanatory design' : type === 'tesis' ? 'quantitative approach with explanatory design' : 'descriptive quantitative approach'}. This approach was chosen because it suits the research objectives to analyze ${topic} comprehensively (Creswell, 2021).\n\n3.2 Population and Sample\n\nThe research population is ${type === 'disertasi' ? 'all stakeholders related to ' + topic : 'individuals/organizations relevant to ' + topic}. The sampling technique uses ${type === 'disertasi' ? 'stratified random sampling with sample size of 800 respondents' : type === 'tesis' ? 'purposive sampling with 300 respondents' : 'convenience sampling with 150 respondents'}.\n\nSample size calculation uses Slovin formula with 5% margin of error (Sekaran & Bougie, 2020).\n\n3.3 Research Variables\n\nVariables in this research include:\n1. Independent Variable: [adjust to topic]\n2. Dependent Variable: ${topic}\n3. Moderating/Mediating Variable: [adjust]\n\n3.4 Research Instrument\n\nThe instrument used is a structured questionnaire developed based on indicators from literature review. The questionnaire uses a 5-point Likert scale (Hair et al., 2022).\n\nInstrument validity was tested using Confirmatory Factor Analysis (CFA), while reliability was measured with Cronbach's Alpha with minimum value of 0.70 (Nunnally & Bernstein, 2020).\n\n3.5 Data Collection Technique\n\nData was collected through:\n1. Online survey using Google Forms platform\n2. ${type === 'disertasi' ? 'In-depth interviews with key informants' : 'Direct questionnaires'}\n3. ${type === 'disertasi' ? 'Focus Group Discussion (FGD)' : 'Documentation observation'}\n\n3.6 Data Analysis Technique\n\nData was analyzed using:\n1. Descriptive statistics for respondent characteristics\n2. ${type === 'disertasi' ? 'Structural Equation Modeling (SEM) with AMOS software' : type === 'tesis' ? 'Multiple regression with SPSS' : 'Correlation analysis with SPSS'}\n3. Hypothesis testing with significance level α = 0.05\n\n3.7 Research Ethics\n\nThis research has received ethical approval from the research ethics committee. All respondents have provided informed consent and data confidentiality is maintained.`;
+      } else if (chapter === 'abstrak') {
+        content = lang === 'id' ?
+          `ABSTRAK\n\n[Nama Penulis]. ${new Date().getFullYear()}. ${topic}. ${type.charAt(0).toUpperCase() + type.slice(1)}. Program Studi [Nama Prodi], [Nama Universitas]. Pembimbing: [Nama Pembimbing].\n\nKata Kunci: ${topic}, penelitian, analisis\n\nPenelitian ini bertujuan untuk menganalisis ${topic} dan faktor-faktor yang mempengaruhinya. Penelitian ini menggunakan pendekatan ${type === 'disertasi' ? 'mixed methods' : 'kuantitatif'} dengan teknik pengambilan sampel ${type === 'disertasi' ? 'stratified random sampling' : 'purposive sampling'}. Data dikumpulkan melalui kuesioner terstruktur dan dianalisis menggunakan ${type === 'disertasi' ? 'Structural Equation Modeling (SEM)' : 'analisis regresi'}.\n\nHasil penelitian menunjukkan bahwa: (1) terdapat pengaruh signifikan antara variabel X terhadap ${topic} dengan nilai p < 0.05; (2) faktor moderasi Z memperkuat hubungan tersebut; dan (3) terdapat perbedaan implementasi berdasarkan karakteristik demografis responden. Temuan ini memberikan kontribusi teoritis terhadap pengembangan teori yang relevan dan implikasi praktis bagi praktisi dan pengambil kebijakan.\n\nPenelitian ini merekomendasikan pengembangan strategi yang lebih komprehensif dalam implementasi ${topic} dengan mempertimbangkan faktor-faktor kontekstual yang telah teridentifikasi. Penelitian lebih lanjut disarankan untuk mengeksplorasi dimensi-dimensi lain yang belum terkaji dalam penelitian ini.\n\n(${type === 'disertasi' ? '500-600' : type === 'tesis' ? '350-400' : '250-300'} kata)` :
+          `ABSTRACT\n\n[Author Name]. ${new Date().getFullYear()}. ${topic}. ${type === 'disertasi' ? 'Dissertation' : type === 'tesis' ? 'Thesis' : 'Undergraduate Thesis'}. Study Program [Program Name], [University Name]. Supervisor: [Supervisor Name].\n\nKeywords: ${topic}, research, analysis\n\nThis research aims to analyze ${topic} and its influencing factors. This research uses a ${type === 'disertasi' ? 'mixed methods' : 'quantitative'} approach with ${type === 'disertasi' ? 'stratified random sampling' : 'purposive sampling'} technique. Data was collected through structured questionnaires and analyzed using ${type === 'disertasi' ? 'Structural Equation Modeling (SEM)' : 'regression analysis'}.\n\nThe results show that: (1) there is a significant effect of variable X on ${topic} with p-value < 0.05; (2) moderating factor Z strengthens this relationship; and (3) there are differences in implementation based on respondent demographic characteristics. These findings contribute theoretically to the development of relevant theories and practical implications for practitioners and policymakers.\n\nThis research recommends developing more comprehensive strategies in implementing ${topic} by considering identified contextual factors. Further research is suggested to explore other dimensions not covered in this study.\n\n(${type === 'disertasi' ? '500-600' : type === 'tesis' ? '350-400' : '250-300'} words)`;
+      }
+
+      const yearFrom = parseInt(document.getElementById('referenceYearFrom').value);
+      const yearTo = parseInt(document.getElementById('referenceYearTo').value);
+      const nationalCount = parseInt(document.getElementById('referenceNational').value);
+      const internationalCount = parseInt(document.getElementById('referenceInternational').value);
+      
+      return {
+        type: type,
+        topic: topic,
+        chapter: chapter,
+        citation: citation,
+        content: content,
+        references: generateReferences(nationalCount, internationalCount, citation, yearFrom, yearTo),
+        risFormat: generateRISFormat(nationalCount, internationalCount, yearFrom, yearTo)
+      };
+    }
+
+    function generateReferences(nationalCount, internationalCount, style, yearFrom, yearTo) {
+      const refs = [];
+      
+      // Generate year range array
+      const yearRange = [];
+      for (let y = yearFrom; y <= yearTo; y++) {
+        yearRange.push(y);
+      }
+      
+      const nationalRefs = [
+        { author: "Suharto, A., & Widodo, B.", title: "Metodologi Penelitian Kuantitatif", journal: "Jurnal Penelitian Indonesia", vol: 12, issue: 3, pages: "145-167", doi: "10.1234/jpi.2021.001", type: "national" },
+        { author: "Pratama, D. R.", title: "Analisis Sistem Informasi Modern", journal: "Jurnal Teknologi Informasi", vol: 18, issue: 2, pages: "89-105", doi: "10.5678/jti.2022.023", type: "national" },
+        { author: "Wijaya, K., Santoso, H., & Kusuma, I.", title: "Pendekatan Kualitatif dalam Penelitian Sosial", journal: "Jurnal Ilmu Sosial Indonesia", vol: 25, issue: 1, pages: "45-68", doi: "10.9012/jisi.2023.012", type: "national" },
+        { author: "Rahayu, S. M.", title: "Teori dan Aplikasi Statistika Lanjutan", publisher: "Penerbit Universitas Indonesia", location: "Jakarta", type: "national" },
+        { author: "Nugroho, A. P., & Lestari, F.", title: "Desain Penelitian Eksperimental", journal: "Jurnal Metode Penelitian", vol: 15, issue: 4, pages: "234-256", doi: "10.2345/jmp.2022.045", type: "national" },
+        { author: "Hidayat, R.", title: "Analisis Data Multivariat", publisher: "Graha Ilmu", location: "Yogyakarta", type: "national" },
+        { author: "Setiawan, B., Permana, Y., & Kusumawati, D.", title: "Paradigma Penelitian Kontemporer", journal: "Jurnal Penelitian dan Evaluasi", vol: 20, issue: 2, pages: "178-195", doi: "10.3456/jpe.2021.067", type: "national" },
+        { author: "Maharani, P. D.", title: "Metode Penelitian Pendidikan", journal: "Jurnal Pendidikan Indonesia", vol: 14, issue: 3, pages: "301-323", doi: "10.4567/jpind.2023.089", type: "national" },
+        { author: "Firmansyah, T., & Andini, W.", title: "Teknik Analisis Data Penelitian", journal: "Jurnal Statistika dan Aplikasi", vol: 22, issue: 1, pages: "67-84", doi: "10.5678/jsa.2022.034", type: "national" },
+        { author: "Susanto, E. H.", title: "Metodologi Penelitian Bisnis", publisher: "Salemba Empat", location: "Jakarta", type: "national" }
+      ];
+      
+      const internationalRefs = [
+        { author: "Anderson, J. R.", title: "Cognitive Psychology and Its Implications", journal: "Journal of Cognitive Science", vol: 15, issue: 3, pages: "245-267", doi: "10.1234/jcs.2021.001", type: "international" },
+        { author: "Brown, L. M., & Wilson, K.", title: "Systems Theory in Modern Research", journal: "International Journal of Systems Research", vol: 28, issue: 2, pages: "112-135", doi: "10.5678/ijsr.2022.045", type: "international" },
+        { author: "Smith, P., & Johnson, R.", title: "Quantitative Methods in Social Science", journal: "Research Methods Quarterly", vol: 41, issue: 1, pages: "78-95", doi: "10.9012/rmq.2023.012", type: "international" },
+        { author: "Lee, S., Park, M., & Kim, H.", title: "Qualitative Research Approaches", journal: "Qualitative Studies Journal", vol: 19, issue: 4, pages: "334-356", doi: "10.3456/qsj.2022.089", type: "international" },
+        { author: "Martinez, C., Silva, R., & Lopez, A.", title: "Structural Analysis in Research Design", journal: "Structural Research Review", vol: 33, issue: 2, pages: "189-210", doi: "10.7890/srr.2023.034", type: "international" },
+        { author: "Thompson, D. E.", title: "Advanced Statistical Methods", publisher: "Academic Press", location: "New York", type: "international" },
+        { author: "Davis, M. K.", title: "Contextual Factors in Research", journal: "Context Studies", vol: 12, issue: 3, pages: "445-467", doi: "10.2345/cs.2021.078", type: "international" },
+        { author: "Kim, Y., & Park, J.", title: "Procedural Dimensions in Analysis", journal: "Procedural Research Journal", vol: 25, issue: 1, pages: "56-73", doi: "10.6789/prj.2022.023", type: "international" },
+        { author: "Creswell, J. W.", title: "Research Design: Qualitative, Quantitative, and Mixed Methods", publisher: "SAGE Publications", location: "London", type: "international" },
+        { author: "Hair, J. F., Black, W. C., Babin, B. J., & Anderson, R. E.", title: "Multivariate Data Analysis", publisher: "Pearson", location: "Boston", type: "international" }
+      ];
+      
+      // Assign random years to national references
+      nationalRefs.forEach(ref => {
+        ref.year = yearRange[Math.floor(Math.random() * yearRange.length)];
+      });
+      
+      // Assign random years to international references
+      internationalRefs.forEach(ref => {
+        ref.year = yearRange[Math.floor(Math.random() * yearRange.length)];
+      });
+
+      let refNumber = 1;
+      
+      // Add national references
+      for (let i = 0; i < Math.min(nationalCount, nationalRefs.length); i++) {
+        const ref = nationalRefs[i];
+        let citation = "";
+
+        if (style === "APA") {
+          if (ref.publisher) {
+            citation = `${ref.author} (${ref.year}). ${ref.title}. ${ref.publisher}.`;
+          } else {
+            citation = `${ref.author} (${ref.year}). ${ref.title}. ${ref.journal}, ${ref.vol}(${ref.issue}), ${ref.pages}. https://doi.org/${ref.doi}`;
+          }
+        } else if (style === "IEEE") {
+          if (ref.publisher) {
+            citation = `[${refNumber}] ${ref.author}, ${ref.title}. ${ref.location}: ${ref.publisher}, ${ref.year}.`;
+          } else {
+            citation = `[${refNumber}] ${ref.author}, "${ref.title}," ${ref.journal}, vol. ${ref.vol}, no. ${ref.issue}, pp. ${ref.pages}, ${ref.year}, doi: ${ref.doi}.`;
+          }
+        } else if (style === "Chicago") {
+          if (ref.publisher) {
+            citation = `${ref.author}. ${ref.year}. ${ref.title}. ${ref.location}: ${ref.publisher}.`;
+          } else {
+            citation = `${ref.author}. "${ref.title}." ${ref.journal} ${ref.vol}, no. ${ref.issue} (${ref.year}): ${ref.pages}.`;
+          }
+        } else if (style === "Vancouver") {
+          if (ref.publisher) {
+            citation = `${refNumber}. ${ref.author}. ${ref.title}. ${ref.location}: ${ref.publisher}; ${ref.year}.`;
+          } else {
+            citation = `${refNumber}. ${ref.author}. ${ref.title}. ${ref.journal}. ${ref.year};${ref.vol}(${ref.issue}):${ref.pages}.`;
+          }
+        } else {
+          citation = `${ref.author} (${ref.year}). ${ref.title}. ${ref.journal || ref.publisher}.`;
+        }
+
+        refs.push({ ...ref, citation: citation });
+        refNumber++;
+      }
+      
+      // Add international references
+      for (let i = 0; i < Math.min(internationalCount, internationalRefs.length); i++) {
+        const ref = internationalRefs[i];
+        let citation = "";
+
+        if (style === "APA") {
+          if (ref.publisher) {
+            citation = `${ref.author} (${ref.year}). ${ref.title}. ${ref.publisher}.`;
+          } else {
+            citation = `${ref.author} (${ref.year}). ${ref.title}. ${ref.journal}, ${ref.vol}(${ref.issue}), ${ref.pages}. https://doi.org/${ref.doi}`;
+          }
+        } else if (style === "IEEE") {
+          if (ref.publisher) {
+            citation = `[${refNumber}] ${ref.author}, ${ref.title}. ${ref.location}: ${ref.publisher}, ${ref.year}.`;
+          } else {
+            citation = `[${refNumber}] ${ref.author}, "${ref.title}," ${ref.journal}, vol. ${ref.vol}, no. ${ref.issue}, pp. ${ref.pages}, ${ref.year}, doi: ${ref.doi}.`;
+          }
+        } else if (style === "Chicago") {
+          if (ref.publisher) {
+            citation = `${ref.author}. ${ref.year}. ${ref.title}. ${ref.location}: ${ref.publisher}.`;
+          } else {
+            citation = `${ref.author}. "${ref.title}." ${ref.journal} ${ref.vol}, no. ${ref.issue} (${ref.year}): ${ref.pages}.`;
+          }
+        } else if (style === "Vancouver") {
+          if (ref.publisher) {
+            citation = `${refNumber}. ${ref.author}. ${ref.title}. ${ref.location}: ${ref.publisher}; ${ref.year}.`;
+          } else {
+            citation = `${refNumber}. ${ref.author}. ${ref.title}. ${ref.journal}. ${ref.year};${ref.vol}(${ref.issue}):${ref.pages}.`;
+          }
+        } else {
+          citation = `${ref.author} (${ref.year}). ${ref.title}. ${ref.journal || ref.publisher}.`;
+        }
+
+        refs.push({ ...ref, citation: citation });
+        refNumber++;
+      }
+
+      return refs;
+    }
+
+    function generateRISFormat(nationalCount, internationalCount, yearFrom, yearTo) {
+      // Generate year range array
+      const yearRange = [];
+      for (let y = yearFrom; y <= yearTo; y++) {
+        yearRange.push(y);
+      }
+      
+      const nationalRefs = [
+        { type: "JOUR", author: ["Suharto, A.", "Widodo, B."], title: "Metodologi Penelitian Kuantitatif", journal: "Jurnal Penelitian Indonesia", vol: "12", issue: "3", pages: "145-167", doi: "10.1234/jpi.2021.001" },
+        { type: "JOUR", author: ["Pratama, D. R."], title: "Analisis Sistem Informasi Modern", journal: "Jurnal Teknologi Informasi", vol: "18", issue: "2", pages: "89-105", doi: "10.5678/jti.2022.023" },
+        { type: "BOOK", author: ["Rahayu, S. M."], title: "Teori dan Aplikasi Statistika Lanjutan", publisher: "Penerbit Universitas Indonesia", location: "Jakarta" },
+        { type: "JOUR", author: ["Nugroho, A. P.", "Lestari, F."], title: "Desain Penelitian Eksperimental", journal: "Jurnal Metode Penelitian", vol: "15", issue: "4", pages: "234-256", doi: "10.2345/jmp.2022.045" },
+        { type: "BOOK", author: ["Hidayat, R."], title: "Analisis Data Multivariat", publisher: "Graha Ilmu", location: "Yogyakarta" }
+      ];
+      
+      const internationalRefs = [
+        { type: "JOUR", author: ["Anderson, J. R."], title: "Cognitive Psychology and Its Implications", journal: "Journal of Cognitive Science", vol: "15", issue: "3", pages: "245-267", doi: "10.1234/jcs.2021.001" },
+        { type: "JOUR", author: ["Brown, L. M.", "Wilson, K."], title: "Systems Theory in Modern Research", journal: "International Journal of Systems Research", vol: "28", issue: "2", pages: "112-135", doi: "10.5678/ijsr.2022.045" },
+        { type: "JOUR", author: ["Smith, P.", "Johnson, R."], title: "Quantitative Methods in Social Science", journal: "Research Methods Quarterly", vol: "41", issue: "1", pages: "78-95", doi: "10.9012/rmq.2023.012" },
+        { type: "BOOK", author: ["Thompson, D. E."], title: "Advanced Statistical Methods", publisher: "Academic Press", location: "New York" },
+        { type: "BOOK", author: ["Creswell, J. W."], title: "Research Design: Qualitative, Quantitative, and Mixed Methods", publisher: "SAGE Publications", location: "London" }
+      ];
+      
+      // Assign random years to all refs
+      nationalRefs.forEach(ref => {
+        ref.year = yearRange[Math.floor(Math.random() * yearRange.length)];
+      });
+      
+      internationalRefs.forEach(ref => {
+        ref.year = yearRange[Math.floor(Math.random() * yearRange.length)];
+      });
+
+      let ris = "";
+      
+      // Add national references
+      for (let i = 0; i < Math.min(nationalCount, nationalRefs.length); i++) {
+        const ref = nationalRefs[i];
+        ris += `TY  - ${ref.type}\n`;
+        ref.author.forEach(au => ris += `AU  - ${au}\n`);
+        ris += `TI  - ${ref.title}\n`;
+        ris += `PY  - ${ref.year}\n`;
+        if (ref.journal) {
+          ris += `JO  - ${ref.journal}\n`;
+          ris += `VL  - ${ref.vol}\n`;
+          ris += `IS  - ${ref.issue}\n`;
+          ris += `SP  - ${ref.pages.split('-')[0]}\n`;
+          ris += `EP  - ${ref.pages.split('-')[1]}\n`;
+          ris += `DO  - ${ref.doi}\n`;
+        } else {
+          ris += `PB  - ${ref.publisher}\n`;
+          ris += `CY  - ${ref.location}\n`;
+        }
+        ris += `ER  - \n\n`;
+      }
+      
+      // Add international references
+      for (let i = 0; i < Math.min(internationalCount, internationalRefs.length); i++) {
+        const ref = internationalRefs[i];
+        ris += `TY  - ${ref.type}\n`;
+        ref.author.forEach(au => ris += `AU  - ${au}\n`);
+        ris += `TI  - ${ref.title}\n`;
+        ris += `PY  - ${ref.year}\n`;
+        if (ref.journal) {
+          ris += `JO  - ${ref.journal}\n`;
+          ris += `VL  - ${ref.vol}\n`;
+          ris += `IS  - ${ref.issue}\n`;
+          ris += `SP  - ${ref.pages.split('-')[0]}\n`;
+          ris += `EP  - ${ref.pages.split('-')[1]}\n`;
+          ris += `DO  - ${ref.doi}\n`;
+        } else {
+          ris += `PB  - ${ref.publisher}\n`;
+          ris += `CY  - ${ref.location}\n`;
+        }
+        ris += `ER  - \n\n`;
+      }
+      
+      return ris;
+    }
+
+    function displayResearchResults(content) {
+      document.getElementById('researchResults').classList.remove('hidden');
+      document.getElementById('researchContent').textContent = content.content;
+      
+      let refsList = "";
+      content.references.forEach((ref, idx) => {
+        refsList += `${ref.citation}\n\n`;
+      });
+      document.getElementById('referencesList').textContent = refsList;
+      document.getElementById('risContent').textContent = content.risFormat;
+      
+      document.getElementById('researchResults').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.getElementById('toggleRISBtn').addEventListener('click', function() {
+      const risFormat = document.getElementById('risFormat');
+      if (risFormat.classList.contains('hidden')) {
+        risFormat.classList.remove('hidden');
+        this.textContent = '📑 Sembunyikan Format RIS';
+      } else {
+        risFormat.classList.add('hidden');
+        this.textContent = '📑 Tampilkan Format RIS';
+      }
+    });
+
+    document.getElementById('copyResearchBtn').addEventListener('click', function() {
+      const content = document.getElementById('researchContent').textContent;
+      navigator.clipboard.writeText(content).then(() => {
+        showToast("Konten berhasil disalin!", "success");
+      });
+    });
+
+    document.getElementById('copyRISBtn').addEventListener('click', function() {
+      const content = document.getElementById('risContent').textContent;
+      navigator.clipboard.writeText(content).then(() => {
+        showToast("Format RIS berhasil disalin!", "success");
+      });
+    });
+
+    document.getElementById('downloadResearchBtn').addEventListener('click', function() {
+      if (!currentResearchContent) {
+        showToast("Tidak ada konten untuk diunduh", "error");
+        return;
+      }
+
+      const fullContent = currentResearchContent.content + "\n\n" + 
+                         "DAFTAR PUSTAKA\n\n" + 
+                         currentResearchContent.references.map(r => r.citation).join("\n\n") + 
+                         "\n\n--- FORMAT RIS ---\n\n" + 
+                         currentResearchContent.risFormat;
+
+      downloadFile(fullContent, 'penelitian_ilmiah.txt', 'text/plain');
+      showToast("File berhasil diunduh!", "success");
+    });
+
+    document.getElementById('saveResearchBtn').addEventListener('click', async function() {
+      if (!currentResearchContent) {
+        showToast("Tidak ada konten untuk disimpan", "error");
+        return;
+      }
+
+      if (currentData.length >= 999) {
+        showToast("Batas maksimum 999 entri tercapai", "error");
+        return;
+      }
+
+      const button = this;
+      button.disabled = true;
+      button.textContent = "Menyimpan...";
+
+      const record = {
+        id: Date.now().toString(),
+        type: "research",
+        image_name: "",
+        extracted_text: "",
+        detected_language: "",
+        output_format: "",
+        research_title: document.getElementById('researchTopic').value,
+        research_type: document.getElementById('researchType').value,
+        research_topic: document.getElementById('researchTopic').value,
+        citation_style: document.getElementById('citationStyle').value,
+        chapter_content: currentResearchContent.content,
+        created_at: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(record);
+
+      button.disabled = false;
+      button.textContent = "📊 Simpan";
+
+      if (result.isOk) {
+        showToast("Konten berhasil disimpan!", "success");
+      } else {
+        showToast("Gagal menyimpan: " + result.error.message, "error");
+      }
+    });
+
+    // Utility functions
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
     function renderHistory() {
       const historyList = document.getElementById('historyList');
       
       if (currentData.length === 0) {
-        historyList.innerHTML = '<p class="text-gray-500" style="font-family: \'Segoe UI\', Tahoma, sans-serif;">Belum ada riwayat konversi</p>';
+        historyList.innerHTML = '<p class="text-gray-500" style="font-family: \'Segoe UI\', Tahoma, sans-serif;">Belum ada riwayat</p>';
         return;
       }
       
@@ -634,28 +1166,38 @@
           hour: '2-digit',
           minute: '2-digit'
         });
-        
-        const previewText = record.extracted_text.substring(0, 150);
-        
-        item.innerHTML = `
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <h4 class="font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 ${record.image_name}</h4>
-              <p class="text-sm text-gray-600" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${dateStr}</p>
+
+        if (record.type === "ocr") {
+          const previewText = record.extracted_text.substring(0, 100);
+          item.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h4 class="font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📸 OCR: ${record.image_name}</h4>
+                <p class="text-sm text-gray-600" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${dateStr}</p>
+              </div>
+              <button class="delete-btn px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm" data-id="${record.__backendId}">🗑️</button>
             </div>
-            <button class="delete-btn px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors" data-id="${record.__backendId}" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🗑️ Hapus</button>
-          </div>
-          <p class="text-sm text-gray-700 mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${previewText}${record.extracted_text.length > 150 ? '...' : ''}</p>
-          <div class="flex gap-2 text-xs">
-            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌍 ${record.detected_language}</span>
-            <span class="px-2 py-1 bg-green-100 text-green-700 rounded" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 ${record.output_format}</span>
-          </div>
-        `;
+            <p class="text-sm text-gray-700" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${previewText}...</p>
+          `;
+        } else {
+          item.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h4 class="font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🎓 Penelitian: ${record.research_title}</h4>
+                <p class="text-sm text-gray-600" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${dateStr}</p>
+              </div>
+              <button class="delete-btn px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm" data-id="${record.__backendId}">🗑️</button>
+            </div>
+            <div class="flex gap-2 text-xs mt-2">
+              <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded">${record.research_type}</span>
+              <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded">${record.citation_style}</span>
+            </div>
+          `;
+        }
         
         historyList.appendChild(item);
       });
       
-      // Add delete event listeners
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async function(e) {
           e.preventDefault();
@@ -664,23 +1206,22 @@
           
           if (record) {
             this.disabled = true;
-            this.textContent = "Menghapus...";
+            this.textContent = "...";
             
             const result = await window.dataSdk.delete(record);
             
             if (result.isOk) {
               showToast("Data berhasil dihapus", "success");
             } else {
-              showToast("Gagal menghapus data: " + result.error.message, "error");
+              showToast("Gagal menghapus: " + result.error.message, "error");
               this.disabled = false;
-              this.textContent = "🗑️ Hapus";
+              this.textContent = "��️";
             }
           }
         });
       });
     }
 
-    // Toast notification
     function showToast(message, type = "success") {
       const toast = document.createElement('div');
       toast.className = 'toast';
@@ -697,8 +1238,7 @@
       }, 3000);
     }
 
-    // Initialize app
     initSDKs();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a5f73cd61de9f7a',t:'MTc2NDM5MTQ5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a5fdd8ae52cea7f',t:'MTc2NDM5NTgyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
