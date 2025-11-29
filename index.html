@@ -1,677 +1,390 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OCR Document Converter</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/_sdk/data_sdk.js"></script>
-  <script src="/_sdk/element_sdk.js"></script>
-  <style>
-    body {
-      box-sizing: border-box;
-    }
-    
-    * {
-      box-sizing: inherit;
-    }
-    
-    .gradient-bg {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .card-shadow {
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .result-section {
-      max-height: 500px;
-      overflow-y: auto;
-    }
-    
-    .table-container {
-      overflow-x: auto;
-    }
-    
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    
-    table th, table td {
-      border: 1px solid #cbd5e0;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    
-    table th {
-      background-color: #edf2f7;
-      font-weight: 600;
-    }
-    
-    .loading-spinner {
-      border: 3px solid #f3f4f6;
-      border-top: 3px solid #667eea;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #48bb78;
-      color: white;
-      padding: 16px 24px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 1000;
-      animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    
-    .hidden {
-      display: none;
-    }
-  </style>
-  <style>@view-transition { navigation: auto; }</style>
- </head>
- <body class="w-full min-h-full">
-  <div class="w-full min-h-full gradient-bg">
-   <div class="w-full px-4 py-8">
-    <div class="max-w-6xl mx-auto"><!-- Header -->
-     <div class="text-center mb-8">
-      <h1 id="app-title" class="text-white mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">OCR Document Converter</h1>
-      <p id="instruction-text" class="text-white" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Upload gambar dokumen untuk mengekstrak teks dan tabel</p>
-     </div><!-- Upload Section -->
-     <div class="bg-white rounded-lg p-6 card-shadow mb-6">
-      <div class="mb-4"><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span>📁 </span><span id="upload-label">Pilih Gambar</span> </label>
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-3"><button id="uploadBtn" class="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📂 Upload dari Galeri </button> <button id="cameraBtn" class="w-full py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📸 Ambil Foto Langsung </button>
-       </div><input type="file" id="imageInputGallery" accept="image/*" class="hidden"> <input type="file" id="imageInputCamera" accept="image/*" capture="environment" class="hidden">
-      </div>
-      <div class="mb-4"><img id="previewImage" class="hidden w-full max-h-96 object-contain rounded-lg border-2 border-gray-200" alt="Preview">
-      </div><!-- Language Settings -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-       <div><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">�� Bahasa Objek</label> <select id="objectLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="id">Indonesia</option> <option value="en">English</option> <option value="mixed">Campuran</option> </select>
-       </div>
-       <div><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">💬 Bahasa Output</label> <select id="outputLang" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="id">Indonesia</option> <option value="en">English</option> <option value="bilingual">Bilingual (Asli + Inggris)</option> </select>
-       </div>
-      </div><!-- Output Format -->
-      <div class="mb-4"><label class="block mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 Format Output</label> <select id="outputFormat" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="pdf">PDF</option> <option value="word">Word (.docx)</option> <option value="markdown">Markdown (.md)</option> <option value="txt">Plain Text (.txt)</option> <option value="excel">Excel (.xlsx)</option> </select>
-      </div><button id="processBtn" class="w-full text-white py-3 rounded-lg transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span id="process-btn-text">🔍 Ekstrak Teks &amp; Tabel</span> </button>
-      <div id="loadingIndicator" class="hidden text-center mt-4">
-       <div class="loading-spinner mx-auto"></div>
-       <p class="mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Memproses gambar...</p>
-      </div>
-     </div><!-- Results Section -->
-     <div id="resultsSection" class="hidden bg-white rounded-lg p-6 card-shadow mb-6">
-      <h2 class="mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📋 Hasil Ekstraksi</h2><!-- Summary -->
-      <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-       <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Ringkasan</h3>
-       <p id="summaryText" style="font-family: 'Segoe UI', Tahoma, sans-serif;"></p>
-      </div><!-- Extracted Text -->
-      <div class="mb-6">
-       <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📝 Teks Lengkap</h3>
-       <div id="extractedText" class="p-4 bg-gray-50 rounded-lg result-section" style="font-family: 'Segoe UI', Tahoma, sans-serif; white-space: pre-wrap;"></div>
-      </div><!-- Tables -->
-      <div id="tablesSection" class="mb-6 hidden">
-       <h3 class="mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📊 Tabel Terdeteksi</h3>
-       <div id="tablesContainer"></div>
-      </div><!-- Download Buttons -->
-      <div class="flex flex-wrap gap-3"><button id="downloadBtn" class="px-6 py-2 text-white rounded-lg transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 💾 Download Hasil </button> <button id="saveToSheetBtn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> 📊 Simpan ke Canva Sheet </button>
-      </div>
-     </div><!-- History Section -->
-     <div class="bg-white rounded-lg p-6 card-shadow">
-      <h2 class="mb-4" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📚 Riwayat Konversi</h2>
-      <div id="historyList"></div>
-     </div>
-    </div>
-   </div>
-  </div>
-  <script>
-    const defaultConfig = {
-      app_title: "OCR Document Converter",
-      upload_button_text: "Pilih Gambar atau Ambil Foto",
-      process_button_text: "🔍 Ekstrak Teks & Tabel",
-      instruction_text: "Upload gambar dokumen untuk mengekstrak teks dan tabel",
-      background_color: "#667eea",
-      surface_color: "#ffffff",
-      text_color: "#1a202c",
-      primary_action_color: "#667eea",
-      secondary_action_color: "#48bb78",
-      font_family: "Segoe UI",
-      font_size: 16
-    };
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Document Converter Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.33.0/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .hocr-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .hocr-table td, .hocr-table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .hocr-table tr:nth-child(even){background-color: #f8fafc;}
+        .hocr-table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 to-purple-800 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">OCR Document Converter Pro</h1>
+            <p class="text-lg text-blue-100">Unggah gambar dokumen untuk ekstraksi teks & tabel profesional</p>
+        </div>
 
-    let currentData = [];
-    let currentResult = null;
-
-    // Data Handler
-    const dataHandler = {
-      onDataChanged(data) {
-        currentData = data;
-        renderHistory();
-      }
-    };
-
-    // Initialize SDKs
-    async function initSDKs() {
-      const dataResult = await window.dataSdk.init(dataHandler);
-      if (!dataResult.isOk) {
-        showToast("Gagal menginisialisasi penyimpanan data", "error");
-      }
-
-      if (window.elementSdk) {
-        window.elementSdk.init({
-          defaultConfig,
-          onConfigChange: async (config) => {
-            const baseSize = config.font_size || defaultConfig.font_size;
-            const customFont = config.font_family || defaultConfig.font_family;
-            const baseFontStack = 'Tahoma, sans-serif';
-            const fontFamily = `${customFont}, ${baseFontStack}`;
-            
-            // Update text content
-            document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
-            document.getElementById('instruction-text').textContent = config.instruction_text || defaultConfig.instruction_text;
-            document.getElementById('upload-label').textContent = config.upload_button_text || defaultConfig.upload_button_text;
-            document.getElementById('process-btn-text').textContent = config.process_button_text || defaultConfig.process_button_text;
-            
-            // Update colors
-            const bgColor = config.background_color || defaultConfig.background_color;
-            const surfaceColor = config.surface_color || defaultConfig.surface_color;
-            const textColor = config.text_color || defaultConfig.text_color;
-            const primaryColor = config.primary_action_color || defaultConfig.primary_action_color;
-            const secondaryColor = config.secondary_action_color || defaultConfig.secondary_action_color;
-            
-            document.querySelector('.gradient-bg').style.background = `linear-gradient(135deg, ${bgColor} 0%, ${bgColor} 100%)`;
-            document.querySelectorAll('.bg-white').forEach(el => el.style.backgroundColor = surfaceColor);
-            document.getElementById('processBtn').style.backgroundColor = primaryColor;
-            document.getElementById('processBtn').addEventListener('mouseenter', function() {
-              this.style.backgroundColor = adjustBrightness(primaryColor, -20);
-            });
-            document.getElementById('processBtn').addEventListener('mouseleave', function() {
-              this.style.backgroundColor = primaryColor;
-            });
-            
-            // Update fonts
-            document.getElementById('app-title').style.fontFamily = fontFamily;
-            document.getElementById('app-title').style.fontSize = `${baseSize * 2}px`;
-            document.getElementById('instruction-text').style.fontFamily = fontFamily;
-            document.getElementById('instruction-text').style.fontSize = `${baseSize}px`;
-            document.querySelectorAll('label, p, button, div').forEach(el => {
-              el.style.fontFamily = fontFamily;
-              el.style.fontSize = `${baseSize}px`;
-            });
-            document.querySelectorAll('h2').forEach(el => {
-              el.style.fontSize = `${baseSize * 1.5}px`;
-            });
-            document.querySelectorAll('h3').forEach(el => {
-              el.style.fontSize = `${baseSize * 1.25}px`;
-            });
-          },
-          mapToCapabilities: (config) => ({
-            recolorables: [
-              {
-                get: () => config.background_color || defaultConfig.background_color,
-                set: (value) => {
-                  window.elementSdk.config.background_color = value;
-                  window.elementSdk.setConfig({ background_color: value });
-                }
-              },
-              {
-                get: () => config.surface_color || defaultConfig.surface_color,
-                set: (value) => {
-                  window.elementSdk.config.surface_color = value;
-                  window.elementSdk.setConfig({ surface_color: value });
-                }
-              },
-              {
-                get: () => config.text_color || defaultConfig.text_color,
-                set: (value) => {
-                  window.elementSdk.config.text_color = value;
-                  window.elementSdk.setConfig({ text_color: value });
-                }
-              },
-              {
-                get: () => config.primary_action_color || defaultConfig.primary_action_color,
-                set: (value) => {
-                  window.elementSdk.config.primary_action_color = value;
-                  window.elementSdk.setConfig({ primary_action_color: value });
-                }
-              },
-              {
-                get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
-                set: (value) => {
-                  window.elementSdk.config.secondary_action_color = value;
-                  window.elementSdk.setConfig({ secondary_action_color: value });
-                }
-              }
-            ],
-            borderables: [],
-            fontEditable: {
-              get: () => config.font_family || defaultConfig.font_family,
-              set: (value) => {
-                window.elementSdk.config.font_family = value;
-                window.elementSdk.setConfig({ font_family: value });
-              }
-            },
-            fontSizeable: {
-              get: () => config.font_size || defaultConfig.font_size,
-              set: (value) => {
-                window.elementSdk.config.font_size = value;
-                window.elementSdk.setConfig({ font_size: value });
-              }
-            }
-          }),
-          mapToEditPanelValues: (config) => new Map([
-            ["app_title", config.app_title || defaultConfig.app_title],
-            ["upload_button_text", config.upload_button_text || defaultConfig.upload_button_text],
-            ["process_button_text", config.process_button_text || defaultConfig.process_button_text],
-            ["instruction_text", config.instruction_text || defaultConfig.instruction_text]
-          ])
-        });
-      }
-    }
-
-    // Helper function to adjust color brightness
-    function adjustBrightness(color, amount) {
-      const hex = color.replace('#', '');
-      const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
-      const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
-      const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
-      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-    }
-
-    // Upload button
-    document.getElementById('uploadBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      document.getElementById('imageInputGallery').click();
-    });
-
-    // Camera button
-    document.getElementById('cameraBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      document.getElementById('imageInputCamera').click();
-    });
-
-    // Image preview for gallery upload
-    document.getElementById('imageInputGallery').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const preview = document.getElementById('previewImage');
-          preview.src = event.target.result;
-          preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // Image preview for camera capture
-    document.getElementById('imageInputCamera').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          const preview = document.getElementById('previewImage');
-          preview.src = event.target.result;
-          preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // Process button
-    document.getElementById('processBtn').addEventListener('click', async function(e) {
-      e.preventDefault();
-      
-      const galleryInput = document.getElementById('imageInputGallery');
-      const cameraInput = document.getElementById('imageInputCamera');
-      const hasGalleryImage = galleryInput.files && galleryInput.files[0];
-      const hasCameraImage = cameraInput.files && cameraInput.files[0];
-      
-      if (!hasGalleryImage && !hasCameraImage) {
-        showToast("Silakan pilih gambar terlebih dahulu", "error");
-        return;
-      }
-
-      const loadingIndicator = document.getElementById('loadingIndicator');
-      const processBtn = document.getElementById('processBtn');
-      
-      loadingIndicator.classList.remove('hidden');
-      processBtn.disabled = true;
-      processBtn.style.opacity = '0.6';
-
-      // Simulate OCR processing
-      setTimeout(() => {
-        const result = simulateOCR();
-        currentResult = result;
-        displayResults(result);
-        
-        loadingIndicator.classList.add('hidden');
-        processBtn.disabled = false;
-        processBtn.style.opacity = '1';
-        
-        showToast("Ekstraksi berhasil!", "success");
-      }, 2000);
-    });
-
-    // Simulate OCR (in real app, this would use actual OCR API)
-    function simulateOCR() {
-      const objectLang = document.getElementById('objectLang').value;
-      const outputLang = document.getElementById('outputLang').value;
-      const outputFormat = document.getElementById('outputFormat').value;
-      
-      return {
-        summary: "Dokumen berisi informasi tentang laporan keuangan dengan tabel data transaksi. Bahasa yang terdeteksi: Indonesia.",
-        fullText: `LAPORAN KEUANGAN TRIWULAN I 2024
-
-Ringkasan Eksekutif
-Laporan ini menyajikan hasil kinerja keuangan perusahaan untuk triwulan pertama tahun 2024. Secara keseluruhan, perusahaan mencatat pertumbuhan positif dibandingkan periode yang sama tahun sebelumnya.
-
-Pendapatan dan Pengeluaran
-Total pendapatan mengalami kenaikan sebesar 15% dibandingkan Q1 2023. Pengeluaran operasional tetap terkendali dengan efisiensi yang meningkat.`,
-        tables: [
-          {
-            name: "Tabel 1: Ringkasan Keuangan",
-            headers: ["Kategori", "Q1 2023", "Q1 2024", "Perubahan (%)"],
-            rows: [
-              ["Pendapatan", "Rp 500.000.000", "Rp 575.000.000", "+15%"],
-              ["Pengeluaran", "Rp 350.000.000", "Rp 380.000.000", "+8.6%"],
-              ["Laba Bersih", "Rp 150.000.000", "Rp 195.000.000", "+30%"]
-            ]
-          }
-        ],
-        detectedLanguage: objectLang === 'id' ? 'Indonesia' : objectLang === 'en' ? 'English' : 'Campuran',
-        outputLanguage: outputLang,
-        outputFormat: outputFormat
-      };
-    }
-
-    // Display results
-    function displayResults(result) {
-      document.getElementById('resultsSection').classList.remove('hidden');
-      document.getElementById('summaryText').textContent = result.summary;
-      document.getElementById('extractedText').textContent = result.fullText;
-      
-      if (result.tables && result.tables.length > 0) {
-        document.getElementById('tablesSection').classList.remove('hidden');
-        const tablesContainer = document.getElementById('tablesContainer');
-        tablesContainer.innerHTML = '';
-        
-        result.tables.forEach((table, index) => {
-          const tableDiv = document.createElement('div');
-          tableDiv.className = 'mb-4 p-4 bg-gray-50 rounded-lg';
-          
-          const tableName = document.createElement('h4');
-          tableName.textContent = table.name;
-          tableName.className = 'mb-2 font-semibold';
-          tableDiv.appendChild(tableName);
-          
-          const tableContainer = document.createElement('div');
-          tableContainer.className = 'table-container';
-          
-          const tableElement = document.createElement('table');
-          tableElement.className = 'w-full';
-          
-          const thead = document.createElement('thead');
-          const headerRow = document.createElement('tr');
-          table.headers.forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            headerRow.appendChild(th);
-          });
-          thead.appendChild(headerRow);
-          tableElement.appendChild(thead);
-          
-          const tbody = document.createElement('tbody');
-          table.rows.forEach(row => {
-            const tr = document.createElement('tr');
-            row.forEach(cell => {
-              const td = document.createElement('td');
-              td.textContent = cell;
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-          });
-          tableElement.appendChild(tbody);
-          
-          tableContainer.appendChild(tableElement);
-          tableDiv.appendChild(tableContainer);
-          tablesContainer.appendChild(tableDiv);
-        });
-      }
-    }
-
-    // Download button
-    document.getElementById('downloadBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      
-      if (!currentResult) {
-        showToast("Tidak ada hasil untuk diunduh", "error");
-        return;
-      }
-      
-      const format = currentResult.outputFormat;
-      let content = generateDownloadContent(currentResult, format);
-      let filename = `dokumen_ocr.${format === 'word' ? 'txt' : format === 'excel' ? 'csv' : format}`;
-      let mimeType = 'text/plain';
-      
-      if (format === 'markdown') {
-        mimeType = 'text/markdown';
-      } else if (format === 'excel') {
-        mimeType = 'text/csv';
-      }
-      
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      showToast("File berhasil diunduh!", "success");
-    });
-
-    // Generate download content
-    function generateDownloadContent(result, format) {
-      let content = '';
-      
-      switch(format) {
-        case 'pdf':
-        case 'word':
-        case 'txt':
-          content = `${result.fullText}\n\n`;
-          if (result.tables) {
-            result.tables.forEach(table => {
-              content += `\n${table.name}\n`;
-              content += table.headers.join('\t') + '\n';
-              table.rows.forEach(row => {
-                content += row.join('\t') + '\n';
-              });
-            });
-          }
-          break;
-          
-        case 'markdown':
-          content = `# Hasil Ekstraksi OCR\n\n## Ringkasan\n${result.summary}\n\n## Teks Lengkap\n${result.fullText}\n\n`;
-          if (result.tables) {
-            result.tables.forEach(table => {
-              content += `\n## ${table.name}\n\n`;
-              content += '| ' + table.headers.join(' | ') + ' |\n';
-              content += '| ' + table.headers.map(() => '---').join(' | ') + ' |\n';
-              table.rows.forEach(row => {
-                content += '| ' + row.join(' | ') + ' |\n';
-              });
-            });
-          }
-          break;
-          
-        case 'excel':
-          if (result.tables && result.tables.length > 0) {
-            result.tables.forEach(table => {
-              content += table.headers.join(',') + '\n';
-              table.rows.forEach(row => {
-                content += row.join(',') + '\n';
-              });
-              content += '\n';
-            });
-          }
-          break;
-      }
-      
-      return content;
-    }
-
-    // Save to sheet
-    document.getElementById('saveToSheetBtn').addEventListener('click', async function(e) {
-      e.preventDefault();
-      
-      if (!currentResult) {
-        showToast("Tidak ada hasil untuk disimpan", "error");
-        return;
-      }
-      
-      if (currentData.length >= 999) {
-        showToast("Batas maksimum 999 entri tercapai. Silakan hapus beberapa entri terlebih dahulu.", "error");
-        return;
-      }
-      
-      const button = this;
-      button.disabled = true;
-      button.textContent = "Menyimpan...";
-      
-      const galleryInput = document.getElementById('imageInputGallery');
-      const cameraInput = document.getElementById('imageInputCamera');
-      const imageName = galleryInput.files[0] ? galleryInput.files[0].name : 
-                        cameraInput.files[0] ? cameraInput.files[0].name : 'unknown.jpg';
-      
-      const record = {
-        id: Date.now().toString(),
-        image_name: imageName,
-        extracted_text: currentResult.fullText,
-        detected_language: currentResult.detectedLanguage,
-        output_format: currentResult.outputFormat,
-        created_at: new Date().toISOString()
-      };
-      
-      const result = await window.dataSdk.create(record);
-      
-      button.disabled = false;
-      button.textContent = "📊 Simpan ke Canva Sheet";
-      
-      if (result.isOk) {
-        showToast("Data berhasil disimpan ke Canva Sheet!", "success");
-      } else {
-        showToast("Gagal menyimpan data: " + result.error.message, "error");
-      }
-    });
-
-    // Render history
-    function renderHistory() {
-      const historyList = document.getElementById('historyList');
-      
-      if (currentData.length === 0) {
-        historyList.innerHTML = '<p class="text-gray-500" style="font-family: \'Segoe UI\', Tahoma, sans-serif;">Belum ada riwayat konversi</p>';
-        return;
-      }
-      
-      historyList.innerHTML = '';
-      
-      currentData.slice().reverse().forEach(record => {
-        const item = document.createElement('div');
-        item.className = 'p-4 bg-gray-50 rounded-lg mb-3';
-        
-        const date = new Date(record.created_at);
-        const dateStr = date.toLocaleDateString('id-ID', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        
-        item.innerHTML = `
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <h4 class="font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 ${record.image_name}</h4>
-              <p class="text-sm text-gray-600" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${dateStr}</p>
+        <!-- Main Card -->
+        <div class="bg-white rounded-xl shadow-2xl p-6 mb-6">
+            <!-- Upload Section -->
+            <div class="mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <button id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2">
+                        📁 Upload File
+                    </button>
+                    <button id="cameraBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2">
+                        📷 Ambil Foto
+                    </button>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+                <div class="relative">
+                    <img id="previewImage" class="hidden w-full max-h-96 object-contain rounded-xl border-2 border-dashed border-gray-200">
+                    <div id="dropZone" class="absolute inset-0 bg-blue-50 bg-opacity-50 hidden items-center justify-center rounded-xl">
+                        <p class="text-blue-800 font-semibold">Lepaskan file di sini</p>
+                    </div>
+                </div>
             </div>
-            <button class="delete-btn px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors" data-id="${record.__backendId}" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🗑️ Hapus</button>
-          </div>
-          <p class="text-sm text-gray-700 mb-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${record.extracted_text.substring(0, 100)}...</p>
-          <div class="flex gap-2 text-xs">
-            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded" style="font-family: 'Segoe UI', Tahoma, sans-serif;">🌍 ${record.detected_language}</span>
-            <span class="px-2 py-1 bg-green-100 text-green-700 rounded" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📄 ${record.output_format}</span>
-          </div>
-        `;
-        
-        historyList.appendChild(item);
-      });
-      
-      // Add delete event listeners
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', async function(e) {
-          e.preventDefault();
-          const id = this.dataset.id;
-          const record = currentData.find(r => r.__backendId === id);
-          
-          if (record) {
-            this.disabled = true;
-            this.textContent = "Menghapus...";
-            
-            const result = await window.dataSdk.delete(record);
-            
-            if (result.isOk) {
-              showToast("Data berhasil dihapus", "success");
-            } else {
-              showToast("Gagal menghapus data: " + result.error.message, "error");
-              this.disabled = false;
-              this.textContent = "🗑️ Hapus";
-            }
-          }
+
+            <!-- Processing Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label class="block mb-2 font-medium">🌐 Bahasa Dokumen</label>
+                    <select id="inputLang" class="w-full p-3 border rounded-lg">
+                        <option value="eng+ind">Auto-Detect</option>
+                        <option value="eng">English</option>
+                        <option value="ind">Indonesia</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2 font-medium">📄 Format Output</label>
+                    <select id="outputFormat" class="w-full p-3 border rounded-lg">
+                        <option value="pdf">PDF</option>
+                        <option value="docx">Word</option>
+                        <option value="xlsx">Excel</option>
+                        <option value="txt">Text</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-2 font-medium">⚙️ Kualitas OCR</label>
+                    <select id="ocrQuality" class="w-full p-3 border rounded-lg">
+                        <option value="fast">Cepat (72dpi)</option>
+                        <option value="normal" selected>Standar (300dpi)</option>
+                        <option value="high">Tinggi (600dpi)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Progress & Actions -->
+            <div class="mb-6">
+                <div id="progressBar" class="h-2 bg-gray-200 rounded-full mb-4">
+                    <div class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <button id="processBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-all">
+                    🚀 Proses Dokumen
+                </button>
+                <div id="loading" class="hidden text-center mt-4">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Memproses...</p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-4">📋 Hasil Ekstraksi</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre id="rawText" class="whitespace-pre-wrap font-mono"></pre>
+                    </div>
+                </div>
+
+                <div id="tablesSection" class="mb-6">
+                    <h3 class="text-xl font-semibold mb-4">📊 Tabel Terdeteksi</h3>
+                    <div id="tablesContainer"></div>
+                </div>
+
+                <div class="flex flex-wrap gap-4">
+                    <button id="downloadBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                        ⬇️ Download Hasil
+                    </button>
+                    <button id="saveBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">
+                        💾 Simpan ke History
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="bg-white rounded-xl shadow-2xl p-6">
+            <h2 class="text-2xl font-bold mb-4">📚 Riwayat Konversi</h2>
+            <div id="historyList" class="space-y-4">
+                <!-- History items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let worker = null;
+        let currentJob = null;
+        let history = JSON.parse(localStorage.getItem('ocrHistory')) || [];
+
+        // Initialize Tesseract Worker
+        async function initOCR() {
+            worker = await Tesseract.createWorker({
+                logger: m => updateProgress(m),
+                errorHandler: err => showToast(`OCR Error: ${err.message}`, 'error')
+            });
+            await worker.loadLanguage('eng+ind');
+            await worker.initialize('eng+ind');
+        }
+
+        // File Handling
+        document.getElementById('uploadBtn').addEventListener('click', () => document.getElementById('imageInput').click());
+        document.getElementById('cameraBtn').addEventListener('click', () => {
+            const input = document.getElementById('imageInput');
+            input.setAttribute('capture', 'environment');
+            input.click();
         });
-      });
-    }
 
-    // Toast notification
-    function showToast(message, type = "success") {
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.textContent = message;
-      
-      if (type === "error") {
-        toast.style.background = '#f56565';
-      }
-      
-      document.body.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
-    }
+        // Drag & Drop Handling
+        const dropZone = document.getElementById('dropZone');
+        ['dragenter', 'dragover'].forEach(e => {
+            document.body.addEventListener(e, (ev) => {
+                ev.preventDefault();
+                dropZone.classList.remove('hidden');
+            });
+        });
 
-    // Initialize app
-    initSDKs();
-  </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a5f1d5101defdf4',t:'MTc2NDM4Nzk1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+        ['dragleave', 'drop'].forEach(e => {
+            document.body.addEventListener(e, (ev) => {
+                ev.preventDefault();
+                dropZone.classList.add('hidden');
+            });
+        });
+
+        document.body.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        // File Input Handling
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            if(e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        async function handleFile(file) {
+            const preview = document.getElementById('previewImage');
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+        }
+
+        // OCR Processing
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            const file = document.getElementById('imageInput').files[0];
+            if(!file) return showToast('Pilih file terlebih dahulu!', 'error');
+            
+            try {
+                document.getElementById('loading').classList.remove('hidden');
+                await initOCR();
+                
+                const { data: { text, hocr } } = await worker.recognize(file, {
+                    tessedit_pageseg_mode: document.getElementById('ocrQuality').value === 'high' ? 6 : 3,
+                    preserve_interword_spaces: '1'
+                });
+
+                displayResults(text, hocr);
+                addToHistory(file.name, text);
+                document.getElementById('resultsSection').classList.remove('hidden');
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+                worker.terminate();
+            }
+        });
+
+        // Result Display
+        function displayResults(text, hocr) {
+            document.getElementById('rawText').textContent = text;
+            renderTables(hocr);
+        }
+
+        function renderTables(hocr) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(hocr, "text/html");
+            const tables = doc.querySelectorAll('.ocr_table');
+            
+            const container = document.getElementById('tablesContainer');
+            container.innerHTML = '';
+            
+            tables.forEach((table, index) => {
+                const tableDiv = document.createElement('div');
+                tableDiv.className = 'overflow-x-auto mb-6';
+                
+                const tableHTML = document.createElement('table');
+                tableHTML.className = 'hocr-table w-full';
+                
+                // Process headers
+                const headerRow = table.querySelector('.ocr_thead tr');
+                if(headerRow) {
+                    const thead = document.createElement('thead');
+                    headerRow.querySelectorAll('.ocr_th').forEach(cell => {
+                        const th = document.createElement('th');
+                        th.textContent = cell.textContent;
+                        thead.appendChild(th);
+                    });
+                    tableHTML.appendChild(thead);
+                }
+                
+                // Process body
+                const tbody = document.createElement('tbody');
+                table.querySelectorAll('.ocr_tr').forEach(row => {
+                    const tr = document.createElement('tr');
+                    row.querySelectorAll('.ocr_td').forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell.textContent;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                tableHTML.appendChild(tbody);
+                
+                tableDiv.appendChild(tableHTML);
+                container.appendChild(tableDiv);
+            });
+        }
+
+        // Download Handling
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const format = document.getElementById('outputFormat').value;
+            const text = document.getElementById('rawText').textContent;
+            const tables = Array.from(document.querySelectorAll('.hocr-table'));
+            
+            try {
+                switch(format) {
+                    case 'pdf':
+                        const pdf = new jspdf.jsPDF();
+                        pdf.text(text, 10, 10);
+                        tables.forEach((table, index) => {
+                            if(index !== 0) pdf.addPage();
+                            pdf.autoTable({ html: table });
+                        });
+                        pdf.save('document.pdf');
+                        break;
+                        
+                    case 'docx':
+                        const docxContent = `<w:document>${text}</w:document>`;
+                        const blob = new Blob([docxContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+                        saveAs(blob, 'document.docx');
+                        break;
+                        
+                    case 'xlsx':
+                        const wb = XLSX.utils.book_new();
+                        tables.forEach((table, index) => {
+                            const ws = XLSX.utils.table_to_sheet(table);
+                            XLSX.utils.book_append_sheet(wb, ws, `Table ${index+1}`);
+                        });
+                        XLSX.writeFile(wb, 'tables.xlsx');
+                        break;
+                        
+                    default:
+                        const txtBlob = new Blob([text], { type: 'text/plain' });
+                        saveAs(txtBlob, 'document.txt');
+                }
+                showToast('Download berhasil!', 'success');
+            } catch (error) {
+                showToast(`Download gagal: ${error.message}`, 'error');
+            }
+        });
+
+        // History Management
+        function addToHistory(filename, content) {
+            history.unshift({
+                id: Date.now(),
+                filename,
+                content: content.substring(0, 500) + '...',
+                date: new Date().toLocaleString()
+            });
+            
+            if(history.length > 20) history.pop();
+            localStorage.setItem('ocrHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = history.map(item => `
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-semibold">${item.filename}</h4>
+                            <p class="text-sm text-gray-500">${item.date}</p>
+                        </div>
+                        <button onclick="deleteHistory(${item.id})" class="text-red-600 hover:text-red-700">🗑️</button>
+                    </div>
+                    <p class="text-sm">${item.content}</p>
+                </div>
+            `).join('');
+        }
+
+        function deleteHistory(id) {
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('ocrHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        // UI Helpers
+        function updateProgress({ progress, status }) {
+            document.getElementById('progressBar').firstElementChild.style.width = `${progress * 100}%`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initial Setup
+        renderHistory();
+    </script>
+</body>
 </html>
