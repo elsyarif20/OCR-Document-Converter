@@ -206,9 +206,23 @@
        <div class="mb-4"><label class="block mb-2 font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;">📏 Panjang Konten</label> <select id="contentLength" class="w-full p-3 border-2 border-gray-300 rounded-lg"> <option value="short">Singkat (±3-5 halaman per bab)</option> <option value="medium" selected>Sedang (±8-12 halaman per bab)</option> <option value="long">Panjang (±15-20 halaman per bab)</option> <option value="very_long">Sangat Panjang (±25-30 halaman per bab)</option> </select>
         <p class="text-sm text-gray-600 mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">💡 Pilih panjang konten sesuai kebutuhan. Konten akan disesuaikan otomatis untuk setiap bab.</p>
        </div><button id="generateBtn" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold" style="font-family: 'Segoe UI', Tahoma, sans-serif;"> <span id="research-btn-text">✨ Generate Konten Ilmiah</span> </button>
-       <div id="researchLoading" class="hidden text-center mt-4">
-        <div class="loading-spinner mx-auto"></div>
-        <p class="mt-2" style="font-family: 'Segoe UI', Tahoma, sans-serif;">Menghasilkan konten ilmiah...</p>
+       <div id="researchLoading" class="hidden mt-4">
+        <div class="bg-gray-900 rounded-lg p-4 text-green-400 font-mono text-sm max-h-96 overflow-y-auto" style="font-family: 'Courier New', monospace;">
+         <div class="mb-2"><span class="text-blue-400">╔══════════════════════════════════════════════════════════╗</span><br><span class="text-blue-400">║</span> <span class="text-yellow-400">⚡ AI RESEARCH ASSISTANT v3.0</span> <span class="text-blue-400">║</span><br><span class="text-blue-400">╚══════════════════════════════════════════════════════════╝</span>
+         </div>
+         <div id="terminalOutput" class="space-y-1">
+          <div class="text-cyan-400">
+           $ Initializing AI Research Generator...
+          </div>
+         </div>
+         <div class="mt-2 flex items-center"><span class="text-green-400 mr-2">▶</span>
+          <div class="flex space-x-1">
+           <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+           <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+           <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+          </div><span id="terminalCursor" class="ml-2 text-green-400 animate-pulse">█</span>
+         </div>
+        </div>
        </div>
       </div><!-- Research Results -->
       <div id="researchResults" class="hidden bg-white rounded-lg p-6 card-shadow mb-6">
@@ -745,18 +759,71 @@
       generateBtn.disabled = true;
       generateBtn.style.opacity = '0.6';
 
-      setTimeout(() => {
-        const content = generateResearchContent();
-        currentResearchContent = content;
-        displayResearchResults(content);
-        
-        researchLoading.classList.add('hidden');
-        generateBtn.disabled = false;
-        generateBtn.style.opacity = '1';
-        
-        showToast("Konten berhasil digenerate!", "success");
-      }, 2000);
+      // Simulate AI terminal processing
+      await simulateAITerminal();
+
+      const content = generateResearchContent();
+      currentResearchContent = content;
+      displayResearchResults(content);
+      
+      researchLoading.classList.add('hidden');
+      generateBtn.disabled = false;
+      generateBtn.style.opacity = '1';
+      
+      showToast("Konten berhasil digenerate!", "success");
     });
+
+    async function simulateAITerminal() {
+      const terminalOutput = document.getElementById('terminalOutput');
+      const chapter = document.getElementById('chapterSelect').value;
+      const type = document.getElementById('researchType').value;
+      const refNational = document.getElementById('referenceNational').value;
+      const refIntl = document.getElementById('referenceInternational').value;
+      
+      const messages = [
+        { text: '$ Initializing AI Research Generator...', color: 'text-cyan-400', delay: 100 },
+        { text: '[✓] Neural networks loaded successfully', color: 'text-green-400', delay: 200 },
+        { text: '[✓] Language model: GPT-4 Academic Edition', color: 'text-green-400', delay: 300 },
+        { text: `[→] Analyzing topic: "${document.getElementById('researchTopic').value}"`, color: 'text-yellow-400', delay: 400 },
+        { text: '[✓] Topic classification complete', color: 'text-green-400', delay: 500 },
+        { text: `[→] Research type: ${type.toUpperCase()}`, color: 'text-blue-400', delay: 150 },
+        { text: `[→] Target chapter: ${chapter.toUpperCase()}`, color: 'text-blue-400', delay: 150 },
+        { text: '[•] Scanning academic database...', color: 'text-purple-400', delay: 400 },
+        { text: `[✓] Found ${refNational} national references`, color: 'text-green-400', delay: 300 },
+        { text: `[✓] Found ${refIntl} international references`, color: 'text-green-400', delay: 300 },
+        { text: '[→] Generating structured outline...', color: 'text-cyan-400', delay: 400 },
+        { text: '[✓] Outline generation complete [████████] 100%', color: 'text-green-400', delay: 500 },
+        { text: '[→] Synthesizing academic content...', color: 'text-yellow-400', delay: 400 },
+        { text: '    ├─ Introduction section... [████████] 100%', color: 'text-gray-400', delay: 300 },
+        { text: '    ├─ Literature review... [████████] 100%', color: 'text-gray-400', delay: 300 },
+        { text: '    ├─ Methodology section... [████████] 100%', color: 'text-gray-400', delay: 300 },
+        { text: '    └─ References compilation... [████████] 100%', color: 'text-gray-400', delay: 300 },
+        { text: '[✓] Content synthesis complete', color: 'text-green-400', delay: 200 },
+        { text: '[→] Applying citation style formatting...', color: 'text-cyan-400', delay: 300 },
+        { text: `[✓] ${document.getElementById('citationStyle').value} style applied`, color: 'text-green-400', delay: 200 },
+        { text: '[→] Quality assurance check...', color: 'text-purple-400', delay: 300 },
+        { text: '    ├─ Grammar check: PASSED ✓', color: 'text-green-400', delay: 200 },
+        { text: '    ├─ Coherence check: PASSED ✓', color: 'text-green-400', delay: 200 },
+        { text: '    ├─ Academic tone: PASSED ✓', color: 'text-green-400', delay: 200 },
+        { text: '    └─ Citation accuracy: PASSED ✓', color: 'text-green-400', delay: 200 },
+        { text: '[✓] All quality checks passed!', color: 'text-green-400', delay: 300 },
+        { text: '', color: '', delay: 100 },
+        { text: '╔══════════════════════════════════════════════════════════╗', color: 'text-blue-400', delay: 100 },
+        { text: '║  ✨ Research content generated successfully! ✨          ║', color: 'text-yellow-400', delay: 100 },
+        { text: '╚══════════════════════════════════════════════════════════╝', color: 'text-blue-400', delay: 100 }
+      ];
+
+      terminalOutput.innerHTML = '';
+
+      for (const msg of messages) {
+        await new Promise(resolve => setTimeout(resolve, msg.delay));
+        const line = document.createElement('div');
+        line.className = msg.color;
+        line.textContent = msg.text;
+        terminalOutput.appendChild(line);
+        terminalOutput.parentElement.scrollTop = terminalOutput.parentElement.scrollHeight;
+      }
+    }
 
     function generateResearchContent() {
       const type = document.getElementById('researchType').value;
@@ -1240,5 +1307,5 @@
 
     initSDKs();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a5fdd8ae52cea7f',t:'MTc2NDM5NTgyNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a5feebe766c58ef',t:'MTc2NDM5NjUyOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
